@@ -1,0 +1,126 @@
+{
+  "version": "1.0.0",
+  "embedding_backend": "frozen-human-reviewed-semantic-vectors-v1",
+  "settings": {
+    "threshold": 0.8,
+    "semantic_floor": 0.72,
+    "max_publication_gap_days": 21,
+    "weights": {
+      "semantic": 0.76,
+      "token_overlap": 0.12,
+      "entity_overlap": 0.07,
+      "title_similarity": 0.05
+    }
+  },
+  "threshold_selection": {
+    "candidates_evaluated": [0.68, 0.72, 0.76, 0.8, 0.84],
+    "selection_rule": "Favor precision, then choose the highest threshold that retains every labeled positive in v1.",
+    "selected": 0.8,
+    "result_at_selected_threshold": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_merges": 0,
+      "missed_merges": 0
+    },
+    "note": "Metrics describe this small calibration fixture only and are not a production-quality claim. Re-run selection when the embedding model or fixture changes."
+  },
+  "articles": [
+    {
+      "id": "acme-funding-wire",
+      "title": "Acme raises $40 million Series B for fraud platform",
+      "description": "Acme will use the financing to expand its payments fraud detection product.",
+      "publishedAt": "2026-09-20T15:00:00Z",
+      "semantic_vector": [0.98, 0.08, 0.02, 0.0, 0.0, 0.0]
+    },
+    {
+      "id": "acme-funding-rewrite",
+      "title": "Fraud prevention startup Acme lands $40m round",
+      "description": "The Series B financing backs expansion of Acme's payments security platform.",
+      "publishedAt": "2026-09-20T14:00:00Z",
+      "semantic_vector": [0.97, 0.1, 0.03, 0.0, 0.0, 0.0]
+    },
+    {
+      "id": "acme-launch",
+      "title": "Acme launches real-time payments fraud monitor",
+      "description": "The company introduced a new bank dashboard after its Series B.",
+      "publishedAt": "2026-09-21T14:00:00Z",
+      "semantic_vector": [0.52, 0.75, 0.02, 0.0, 0.0, 0.0]
+    },
+    {
+      "id": "acme-old-round",
+      "title": "Acme raises $12 million in Series A funding",
+      "description": "Acme closed an earlier round for its fraud software.",
+      "publishedAt": "2025-05-01T10:00:00Z",
+      "semantic_vector": [0.9, 0.22, 0.02, 0.0, 0.0, 0.0]
+    },
+    {
+      "id": "beta-funding",
+      "title": "Beta secures $40 million to expand logistics AI",
+      "description": "Beta's growth round will finance its supply-chain intelligence product.",
+      "publishedAt": "2026-09-19T10:00:00Z",
+      "semantic_vector": [0.73, 0.05, 0.62, 0.0, 0.0, 0.0]
+    },
+    {
+      "id": "nova-acquisition-wire",
+      "title": "Nova acquires Orbit in enterprise software deal",
+      "description": "Nova announced its acquisition of workflow vendor Orbit on Tuesday.",
+      "publishedAt": "2026-09-18T16:00:00Z",
+      "semantic_vector": [0.0, 0.0, 0.03, 0.99, 0.06, 0.0]
+    },
+    {
+      "id": "nova-acquisition-rewrite",
+      "title": "Workflow vendor Orbit bought by Nova",
+      "description": "The enterprise software companies confirmed the acquisition Tuesday.",
+      "publishedAt": "2026-09-18T15:00:00Z",
+      "semantic_vector": [0.0, 0.0, 0.02, 0.98, 0.09, 0.0]
+    },
+    {
+      "id": "nova-partnership",
+      "title": "Nova partners with Orbit on European rollout",
+      "description": "The companies signed a distribution partnership for workflow software.",
+      "publishedAt": "2026-09-10T12:00:00Z",
+      "semantic_vector": [0.0, 0.0, 0.02, 0.55, 0.79, 0.0]
+    },
+    {
+      "id": "cloud-outage-wire",
+      "title": "CloudCo outage disrupts customers across US",
+      "description": "A networking failure made CloudCo services unavailable for three hours.",
+      "publishedAt": "2026-09-17T12:30:00Z",
+      "semantic_vector": [0.0, 0.0, 0.0, 0.0, 0.06, 0.99]
+    },
+    {
+      "id": "cloud-outage-sparse",
+      "title": "CloudCo restores service after three-hour disruption",
+      "description": "",
+      "publishedAt": "2026-09-17T13:00:00Z",
+      "semantic_vector": [0.0, 0.0, 0.0, 0.0, 0.09, 0.98]
+    },
+    {
+      "id": "cloud-outage-later",
+      "title": "CloudCo reports separate European outage",
+      "description": "A database fault disrupted European customers during October.",
+      "publishedAt": "2026-10-20T13:00:00Z",
+      "semantic_vector": [0.0, 0.0, 0.0, 0.0, 0.22, 0.9]
+    },
+    {
+      "id": "acme-followup-analysis",
+      "title": "Acme expands into Europe after $40 million round",
+      "description": "The fraud startup opened a London office and began hiring a regional team.",
+      "publishedAt": "2026-09-24T09:00:00Z",
+      "semantic_vector": [0.62, 0.68, 0.0, 0.0, 0.0, 0.0]
+    }
+  ],
+  "pairs": [
+    {"left": "acme-funding-wire", "right": "acme-funding-rewrite", "same_event": true, "case": "syndicated funding rewrite"},
+    {"left": "nova-acquisition-wire", "right": "nova-acquisition-rewrite", "same_event": true, "case": "reordered acquisition headline"},
+    {"left": "cloud-outage-wire", "right": "cloud-outage-sparse", "same_event": true, "case": "same outage with sparse description"},
+    {"left": "acme-funding-wire", "right": "acme-launch", "same_event": false, "case": "same company, funding versus launch"},
+    {"left": "acme-funding-wire", "right": "acme-old-round", "same_event": false, "case": "same company, different date and amount"},
+    {"left": "acme-funding-wire", "right": "beta-funding", "same_event": false, "case": "same event type and amount, different organization"},
+    {"left": "nova-acquisition-wire", "right": "nova-partnership", "same_event": false, "case": "same organizations, acquisition versus partnership"},
+    {"left": "cloud-outage-wire", "right": "cloud-outage-later", "same_event": false, "case": "same company, separate outage date"},
+    {"left": "acme-funding-wire", "right": "acme-followup-analysis", "same_event": false, "case": "follow-up expansion introduces a new occurrence"},
+    {"left": "beta-funding", "right": "nova-acquisition-wire", "same_event": false, "case": "different event and organization"}
+  ]
+}

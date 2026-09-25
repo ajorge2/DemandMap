@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820">
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<text x="80" y="42" font-family="Arial" font-size="22" font-weight="700" fill="#111827">Job-title embedding projection</text>
+<text x="80" y="67" font-family="Arial" font-size="13" fill="#4B5563">PCA view; fill is strongest affinity, dark outline means 2+ memberships at cutoff 0.40</text>
+<rect x="80" y="90" width="790" height="650" fill="#F9FAFB" stroke="#D1D5DB"/>
+<text x="547.0" y="494.6" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#2563EB" opacity="0.85">C0</text>
+<text x="192.1" y="464.1" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#DC2626" opacity="0.85">C1</text>
+<text x="470.6" y="343.8" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#059669" opacity="0.85">C2</text>
+<circle cx="380.1" cy="583.9" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Gary Vaynerchuk | CEO | memberships: 1 | C0=0.47, C1=0.25, C2=0.23</title></circle>
+<circle cx="759.1" cy="282.5" r="7" fill="#059669" fill-opacity="0.78" stroke="#111827" stroke-width="2.6"><title>Kevin O&#x27;Leary | Investor, Strategic Advisor | memberships: 2 | C2=1.00, C0=0.77, C1=0.05</title></circle>
+<circle cx="80.0" cy="450.3" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Ryan Reynolds | Co-Founder | memberships: 1 | C1=0.88, C2=0.33, C0=0.23</title></circle>
+<circle cx="694.7" cy="101.2" r="7" fill="#059669" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Steven Bartlett | Investor | memberships: 1 | C2=0.91, C0=0.05, C1=0.03</title></circle>
+<circle cx="814.4" cy="520.9" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Tiến Nguyễn Duy | Embaixadora | memberships: 0 | C0=0.00, C2=0.00, C1=0.00</title></circle>
+<circle cx="169.5" cy="488.5" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Reid Hoffman | Co-Founder, Board Member | memberships: 1 | C1=0.47, C2=0.19, C0=0.10</title></circle>
+<circle cx="572.0" cy="507.0" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Tim Tebow | Board Member | memberships: 0 | C0=0.31, C1=0.13, C2=0.09</title></circle>
+<circle cx="795.7" cy="586.0" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Andrew Huberman | Scientific Advisor | memberships: 1 | C0=0.72, C2=0.01, C1=0.00</title></circle>
+<circle cx="459.1" cy="476.6" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#111827" stroke-width="2.6"><title>Steve Nouri | Advisor - founding member | memberships: 2 | C0=0.83, C2=0.54, C1=0.21</title></circle>
+<circle cx="135.3" cy="510.9" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Ryan Holmes | Co-Founder &amp; Chairman | memberships: 1 | C1=0.59, C2=0.10, C0=0.09</title></circle>
+<circle cx="189.1" cy="474.6" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Tim Brown | Cofounder and Chief Evangelist | memberships: 0 | C1=0.28, C2=0.02, C0=0.00</title></circle>
+<circle cx="607.3" cy="740.0" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Tejaswee Tripathy | Chief Human Resources Officer | memberships: 0 | C0=0.06, C1=0.02, C2=0.00</title></circle>
+<circle cx="492.4" cy="469.5" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Alex Hormozi | Managing Partner | memberships: 0 | C0=0.33, C1=0.19, C2=0.17</title></circle>
+<circle cx="632.7" cy="572.2" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#111827" stroke-width="2.6"><title>Sanyin Siang | Advisor to the CEO | memberships: 2 | C0=0.88, C2=0.68, C1=0.17</title></circle>
+<circle cx="267.7" cy="403.1" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Suze Orman | Co-Founder, SecureSave | memberships: 0 | C1=0.06, C2=0.00, C0=0.00</title></circle>
+<circle cx="232.9" cy="396.1" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Camila Farani | Fundador | memberships: 0 | C1=0.32, C2=0.06, C0=0.03</title></circle>
+<circle cx="242.0" cy="406.4" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Dr Ola Brown | Founding Partner | memberships: 0 | C1=0.36, C2=0.21, C0=0.13</title></circle>
+<circle cx="544.2" cy="552.7" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Justin Wright | beehiiv Author of Brilliance Brief | memberships: 0 | C1=0.00, C0=0.00, C2=0.00</title></circle>
+<circle cx="614.6" cy="310.5" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Robin Wauters | Venture Scout | memberships: 0 | C2=0.04, C0=0.02, C1=0.01</title></circle>
+<circle cx="659.8" cy="314.0" r="7" fill="#059669" fill-opacity="0.78" stroke="#111827" stroke-width="2.6"><title>Dr. Joerg Storm | Investor &amp; Advisory Board Member | memberships: 2 | C2=0.83, C0=0.59, C1=0.12</title></circle>
+<circle cx="565.5" cy="445.4" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Gustavo Caetano | Partner | memberships: 1 | C0=0.54, C2=0.25, C1=0.15</title></circle>
+<circle cx="870.0" cy="596.8" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Stephen Curry | Special Advisor | memberships: 1 | C0=0.94, C2=0.03, C1=0.00</title></circle>
+<circle cx="598.4" cy="90.0" r="7" fill="#059669" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Aishwarya Srinivasan | Angel Investor | memberships: 1 | C2=0.75, C1=0.07, C0=0.01</title></circle>
+<circle cx="620.1" cy="522.9" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Dave Kerpen | Vice President | memberships: 1 | C0=0.50, C2=0.15, C1=0.09</title></circle>
+<circle cx="828.3" cy="569.3" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#111827" stroke-width="2.6"><title>Cory Warfield | Strategic Advisor | memberships: 2 | C0=1.00, C2=0.50, C1=0.01</title></circle>
+<circle cx="610.9" cy="670.9" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Marco Gomes | Chief Information Officer | memberships: 0 | C1=0.00, C0=0.00, C2=0.00</title></circle>
+<circle cx="80.0" cy="450.3" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Reno Perry | Co-Founder | memberships: 1 | C1=0.88, C2=0.33, C0=0.23</title></circle>
+<circle cx="801.7" cy="565.8" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Jody Padar | Truth Advisor | memberships: 1 | C0=0.63, C2=0.01, C1=0.00</title></circle>
+<circle cx="134.5" cy="424.1" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#111827" stroke-width="2.6"><title>Vaibhav Sisinty | Founder | memberships: 2 | C1=0.70, C2=0.61, C0=0.38</title></circle>
+<circle cx="157.5" cy="513.8" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Henry Blodget | Chair and Co-Founder | memberships: 1 | C1=0.54, C0=0.12, C2=0.08</title></circle>
+<circle cx="134.5" cy="424.1" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#111827" stroke-width="2.6"><title>Amena Baig | Founder | memberships: 2 | C1=0.70, C2=0.61, C0=0.38</title></circle>
+<circle cx="552.2" cy="118.7" r="7" fill="#059669" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Frank Thelen | Seed Investor | memberships: 1 | C2=0.43, C1=0.04, C0=0.00</title></circle>
+<circle cx="827.7" cy="647.1" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Michelle Zampiere | Consultora de Recursos Humanos | memberships: 0 | C0=0.02, C2=0.00, C1=0.00</title></circle>
+<circle cx="80.0" cy="450.3" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Alex Rodriguez | Co-Founder | memberships: 1 | C1=0.88, C2=0.33, C0=0.23</title></circle>
+<circle cx="80.0" cy="450.3" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Ishan Sharma | Co-Founder | memberships: 1 | C1=0.88, C2=0.33, C0=0.23</title></circle>
+<circle cx="171.3" cy="541.0" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Dennis R. Mortensen | CEO and Founder | memberships: 1 | C1=0.43, C0=0.08, C2=0.05</title></circle>
+<circle cx="157.0" cy="544.5" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Atif Rafiq | CEO &amp; Co-founder | memberships: 1 | C1=0.50, C0=0.15, C2=0.12</title></circle>
+<circle cx="764.3" cy="546.5" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Andréa Greco | Mentora de Carreiras, Networking e LinkedIn | memberships: 0 | C2=0.00, C0=0.00, C1=0.00</title></circle>
+<circle cx="80.0" cy="450.3" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Nansi Mishra | Co-Founder | memberships: 1 | C1=0.88, C2=0.33, C0=0.23</title></circle>
+<circle cx="232.9" cy="396.1" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>André Forastieri | Fundador | memberships: 0 | C1=0.32, C2=0.06, C0=0.03</title></circle>
+<circle cx="154.1" cy="519.5" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Mohamed (Nagaty) Aboulnaga | Cofounder and executive chairman | memberships: 0 | C1=0.40, C2=0.03, C0=0.01</title></circle>
+<circle cx="189.0" cy="587.2" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Mark Hyman, MD | Co-Founder and Chief Medical Officer | memberships: 0 | C1=0.23, C2=0.00, C0=0.00</title></circle>
+<circle cx="159.1" cy="511.1" r="7" fill="#DC2626" fill-opacity="0.78" stroke="#111827" stroke-width="2.6"><title>Oana Labes, MBA, CPA | Founder &amp; CEO | memberships: 3 | C1=0.63, C2=0.47, C0=0.43</title></circle>
+<circle cx="714.7" cy="539.9" r="7" fill="#2563EB" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>John Barrows | Advisory Board Member | memberships: 1 | C0=0.68, C2=0.13, C1=0.02</title></circle>
+<circle cx="722.9" cy="520.4" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Wagner Sousa | Talent Acquisition | memberships: 0 | C0=0.01, C2=0.01, C1=0.01</title></circle>
+<circle cx="694.7" cy="101.2" r="7" fill="#059669" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Ryan Serhant | Investor | memberships: 1 | C2=0.91, C0=0.05, C1=0.03</title></circle>
+<circle cx="559.2" cy="588.2" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Leila Hormozi | Executive Chairwoman | memberships: 0 | C1=0.10, C0=0.07, C2=0.02</title></circle>
+<circle cx="768.1" cy="519.7" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Patricia Pessoa Pousa | Influenciadora | memberships: 0 | C2=0.00, C0=0.00, C1=0.00</title></circle>
+<circle cx="754.5" cy="504.0" r="7" fill="#9CA3AF" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Samara Souza | Mentora | memberships: 0 | C0=0.17, C2=0.01, C1=0.01</title></circle>
+<circle cx="598.4" cy="90.0" r="7" fill="#059669" fill-opacity="0.78" stroke="#FFFFFF" stroke-width="1.2"><title>Tobi Oluwole | Angel Investor | memberships: 1 | C2=0.75, C1=0.07, C0=0.01</title></circle>
+<text x="905" y="105" font-family="Arial" font-size="15" font-weight="700" fill="#111827">Clusters</text>
+<circle cx="912" cy="132" r="7" fill="#2563EB"/>
+<text x="929" y="137" font-family="Arial" font-size="12" fill="#111827">C0: Board &amp; Advisory Roles</text>
+<circle cx="912" cy="186" r="7" fill="#DC2626"/>
+<text x="929" y="191" font-family="Arial" font-size="12" fill="#111827">C1: C-Suite &amp; Functional Executives</text>
+<circle cx="912" cy="240" r="7" fill="#059669"/>
+<text x="929" y="245" font-family="Arial" font-size="12" fill="#111827">C2: Investors</text>
+<text x="475.0" y="795" text-anchor="middle" font-family="Arial" font-size="12" fill="#6B7280">PCA component 1</text>
+<text x="22" y="415.0" transform="rotate(-90 22 415.0)" text-anchor="middle" font-family="Arial" font-size="12" fill="#6B7280">PCA component 2</text>
+</svg>

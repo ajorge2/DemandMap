@@ -1,0 +1,6 @@
+numpy>=2.0
+pandas>=2.0
+
+# Optional but preferred for stronger semantic embeddings:
+# sentence-transformers>=3.0
+

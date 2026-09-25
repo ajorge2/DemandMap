@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fuzzy semantic clustering explorer</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: light-dark(#f5f7fb, #0d1117);
+      --surface: light-dark(#ffffff, #161b22);
+      --surface-2: light-dark(#f8fafc, #1c232d);
+      --text: light-dark(#162033, #edf2f7);
+      --muted: light-dark(#617087, #9ba7b7);
+      --border: light-dark(#dce3ec, #303946);
+      --shadow: light-dark(0 16px 42px rgba(31, 45, 61, .08), 0 16px 42px rgba(0, 0, 0, .28));
+      --c0: #3b82f6;
+      --c1: #ef4444;
+      --c2: #10b981;
+      --c3: #8b5cf6;
+      --c4: #f59e0b;
+      --c5: #06b6d4;
+      --c6: #ec4899;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { width: min(1220px, calc(100% - 32px)); margin: 32px auto 64px; }
+    header { display: grid; gap: 14px; margin-bottom: 24px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(30px, 4vw, 48px); letter-spacing: -.04em; line-height: 1.04; }
+    h2 { font-size: 19px; letter-spacing: -.015em; }
+    .lede { max-width: 780px; color: var(--muted); line-height: 1.6; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag { padding: 7px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 13px; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); }
+    .control-panel { padding: 22px; margin-bottom: 18px; }
+    .dataset-panel { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; padding: 20px 22px; margin-bottom: 18px; }
+    .dataset-copy { display: grid; gap: 6px; }
+    .dataset-copy p { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .dataset-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+    .upload-button, .secondary-button { display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; padding: 10px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .upload-button { border: 0; background: var(--text); color: var(--surface); }
+    .secondary-button { border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+    .upload-button input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
+    .dataset-status { grid-column: 1 / -1; min-height: 18px; color: var(--muted); font-size: 13px; }
+    .dataset-status.is-error { color: #dc2626; }
+    .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+    .control-copy { display: grid; gap: 8px; margin-bottom: 10px; }
+    .control-copy p { color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .slider-row { display: grid; grid-template-columns: 1fr 70px; gap: 14px; align-items: center; }
+    .field-control { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--border); }
+    .field-toggle-list { display: flex; flex-wrap: wrap; gap: 9px; }
+    .field-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 13px; cursor: pointer; user-select: none; }
+    .field-toggle:has(input:checked) { border-color: var(--c0); color: var(--text); box-shadow: inset 0 0 0 1px var(--c0); }
+    .field-toggle input { width: 15px; height: 15px; margin: 0; accent-color: var(--c0); cursor: pointer; }
+    .field-status { min-height: 20px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .field-status.is-error { color: #dc2626; }
+    input[type="range"] { width: 100%; accent-color: var(--c0); }
+    output { font-variant-numeric: tabular-nums; font-size: 19px; font-weight: 700; text-align: right; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .stat { padding: 18px; }
+    .stat-label { color: var(--muted); font-size: 13px; }
+    .stat-value { margin-top: 8px; font-size: 30px; font-weight: 750; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+    .visual-grid { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: stretch; }
+    .chart-panel { padding: 18px; min-height: 620px; }
+    .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 12px; }
+    .panel-heading p { color: var(--muted); font-size: 13px; margin-top: 5px; }
+    #scatter { width: 100%; height: 540px; display: block; }
+    .side-panel { padding: 18px; }
+    .cluster-list { display: grid; grid-template-columns: 1fr; row-gap: 0; margin-top: 16px; }
+    .cluster-list-header { display: grid; grid-template-columns: 40px 1fr auto 54px; gap: 10px; align-items: center; padding: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 650; border-bottom: 1px solid var(--border); }
+    .cluster-list-header span:last-child { text-align: right; }
+    .cluster-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 54px; gap: 10px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--border); transition: opacity .15s ease; }
+    .cluster-row.is-unselected { opacity: .55; }
+    .cluster-row:last-child { border-bottom: 0; }
+    .swatch { width: 10px; height: 10px; border-radius: 50%; }
+    .cluster-name { min-width: 0; font-size: 14px; line-height: 1.35; }
+    .cluster-name strong { display: block; font-weight: 680; }
+    .cluster-evidence { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .cluster-description { display: block; margin-top: 5px; color: var(--text); font-size: 12px; line-height: 1.5; font-weight: 450; }
+    .cluster-evidence b { color: var(--text); font-weight: 620; }
+    .cluster-count { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .persona-select { justify-self: end; width: 18px; height: 18px; accent-color: var(--c0); cursor: pointer; }
+    .representative-note { margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .representative-records { margin-top: 9px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); }
+    .representative-records summary { padding: 8px 10px; cursor: pointer; color: var(--text); font-size: 11px; font-weight: 700; }
+    .representative-list { display: grid; gap: 7px; padding: 0 8px 8px; }
+    .representative-card { min-width: 0; padding: 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow-wrap: anywhere; }
+    .representative-card-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .representative-card-head strong { min-width: 0; font-size: 12px; }
+    .affinity-score { flex: 0 0 auto; color: var(--c0); font-size: 11px; font-weight: 750; font-variant-numeric: tabular-nums; }
+    .representative-row-id { margin-top: 2px; color: var(--muted); font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .representative-fields { display: grid; gap: 3px; margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .representative-fields b { color: var(--text); font-weight: 650; }
+    .representative-section-label { margin-top: 7px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+    .persona-grounding { margin-top: 9px; border: 1px solid color-mix(in srgb, var(--c0) 36%, var(--border)); border-radius: 9px; background: var(--surface-2); }
+    .persona-grounding > summary { padding: 8px 10px; cursor: pointer; color: var(--text); font-size: 11px; font-weight: 700; }
+    .grounding-body { display: grid; gap: 10px; padding: 0 9px 10px; }
+    .grounding-layer { padding: 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+    .grounding-layer-label { color: var(--c0); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .grounding-layer p { margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .grounding-field { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .grounding-field:first-of-type { border-top: 0; }
+    .grounding-field strong { display: block; font-size: 10px; }
+    .source-evidence-list { display: grid; gap: 6px; margin-top: 7px; }
+    .source-evidence-item { padding: 7px; border-left: 3px solid var(--c0); background: var(--surface-2); overflow-wrap: anywhere; }
+    .source-evidence-meta { color: var(--muted); font: 9px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .source-evidence-value { margin-top: 3px; color: var(--text); font-size: 10px; line-height: 1.4; }
+    .no-source-evidence { margin-top: 6px; color: var(--muted); font-size: 10px; font-style: italic; }
+    .pain-point-action { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+    .pain-point-button { appearance: none; border: 0; border-radius: 10px; padding: 11px 16px; background: var(--text); color: var(--surface); font: inherit; font-weight: 700; cursor: pointer; }
+    .pain-point-button:disabled { cursor: not-allowed; opacity: .45; }
+    .pain-point-note { color: var(--muted); font-size: 13px; }
+    .pain-point-result { margin-top: 16px; padding: 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+    .pain-point-result h3 { margin: 0 0 10px; font-size: 14px; }
+    .pain-point-result pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .news-status { margin-top: 14px; color: var(--muted); font-size: 14px; }
+    .news-status.is-error { color: #dc2626; }
+    .article-results { margin-top: 18px; }
+    .article-results-heading { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin-bottom: 10px; }
+    .article-results-heading span { color: var(--muted); font-size: 13px; }
+    .analysis-note { padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .analysis-section { margin-top: 22px; }
+    .analysis-section > h3 { margin-bottom: 10px; font-size: 16px; }
+    .problem-list { display: grid; gap: 12px; }
+    .problem-card { padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+    .problem-title-row { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
+    .problem-title-row h4 { margin: 0; font-size: 16px; line-height: 1.35; }
+    .confidence-badge { flex: 0 0 auto; padding: 4px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .problem-card p { margin-top: 10px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .problem-card p strong { color: var(--text); }
+    .evidence-citations { display: inline-flex; flex-wrap: wrap; gap: 5px; margin-left: 5px; }
+    .evidence-citations a { color: var(--c0); font-weight: 700; text-underline-offset: 2px; }
+    .metric-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .metric-chip { padding: 5px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .ledger-wrap { overflow-x: auto; }
+    .article-analysis-list { display: grid; gap: 8px; }
+    .article-analysis-item { border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+    .article-analysis-item summary { cursor: pointer; padding: 11px 13px; font-size: 13px; font-weight: 680; line-height: 1.4; }
+    .article-analysis-body { padding: 0 13px 13px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .article-analysis-body p { margin: 6px 0 0; }
+    .article-analysis-body ul { margin: 8px 0 0; padding-left: 20px; }
+    .article-analysis-body a { color: var(--c0); }
+    .overlap-title { margin-top: 28px; }
+    .overlap-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 30px; row-gap: 9px; margin-top: 13px; }
+    .overlap-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; font-size: 13px; color: var(--muted); }
+    .overlap-row strong { color: var(--text); font-variant-numeric: tabular-nums; }
+    .table-panel { margin-top: 18px; padding: 18px; }
+    .table-wrap { overflow-x: auto; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { color: var(--muted); font-weight: 600; text-align: left; border-bottom: 1px solid var(--border); padding: 11px 10px; white-space: nowrap; }
+    td { border-bottom: 1px solid var(--border); padding: 11px 10px; vertical-align: top; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .score-list { display: flex; flex-wrap: wrap; gap: 5px; min-width: 250px; }
+    .score { display: inline-flex; gap: 5px; align-items: center; border-radius: 999px; padding: 4px 7px; background: var(--surface-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .score i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .muted { color: var(--muted); }
+    .tooltip { position: fixed; pointer-events: none; opacity: 0; z-index: 20; max-width: 340px; padding: 10px 12px; border-radius: 10px; background: light-dark(#111827, #f8fafc); color: light-dark(#f8fafc, #111827); font-size: 12px; line-height: 1.45; box-shadow: 0 12px 32px rgba(0,0,0,.24); transition: opacity .12s ease; }
+    .footnote { margin-top: 18px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .trace-panel { padding: 20px 22px; margin-bottom: 18px; }
+    .trace-heading { display: flex; justify-content: space-between; gap: 14px; align-items: baseline; margin-bottom: 14px; }
+    .trace-heading p { color: var(--muted); font-size: 13px; }
+    .trace-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .trace-step { padding: 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2); }
+    .trace-step-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+    .trace-step strong { font-size: 13px; line-height: 1.35; }
+    .trace-badge { flex: 0 0 auto; padding: 3px 6px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+    .trace-badge.model { border-color: #8b5cf6; color: #8b5cf6; }
+    .trace-step p { margin-top: 7px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .trace-status { display: block; margin-top: 8px; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .trace-status.running { color: #d97706; }
+    .trace-status.completed { color: #059669; }
+    .trace-status.fallback, .trace-status.error { color: #dc2626; }
+    @media (max-width: 900px) {
+      .control-grid, .visual-grid { grid-template-columns: 1fr; }
+      .trace-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .chart-panel { min-height: 520px; }
+      #scatter { height: 440px; }
+    }
+    @media (max-width: 520px) {
+      main { width: min(100% - 20px, 1220px); margin-top: 18px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stat { padding: 14px; }
+      .stat-value { font-size: 25px; }
+      .panel-heading { display: grid; }
+      .overlap-list { grid-template-columns: 1fr; }
+      .dataset-panel, .trace-grid { grid-template-columns: 1fr; }
+      .dataset-actions { justify-content: flex-start; }
+      .cluster-list-header, .cluster-row { grid-template-columns: 24px minmax(0, 1fr) auto 38px; gap: 6px; }
+      .representative-card-head { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Fuzzy semantic clustering explorer</h1>
+      <p class="lede">Explore overlapping customer personas from any CSV. Choose the fields that define similarity, adjust fuzzy membership, and turn selected personas into evidence-backed market pain hypotheses.</p>
+      <div class="meta">
+        <span class="tag" id="rowMeta">50 prospects</span>
+        <span class="tag" id="datasetMeta">Demo CSV</span>
+        <span class="tag" id="semanticMeta">Clustering fields: Job Title</span>
+        <span class="tag" id="kMeta">6 fuzzy prototypes</span>
+        <span class="tag" id="embeddingMeta">Embedding vectors ready</span>
+      </div>
+    </header>
+
+    <section class="panel dataset-panel" aria-label="Customer CSV source">
+      <div class="dataset-copy">
+        <h2>Customer CSV</h2>
+        <p>CSV parsing stays local. During clustering, nonblank values from the selected descriptive fields are sent to OpenAI's Embeddings API; returned vectors are cached locally without source text. The bundled export stays available as the default demo.</p>
+      </div>
+      <div class="dataset-actions">
+        <label class="upload-button">Upload customer CSV<input id="csvUpload" type="file" accept=".csv,text/csv"></label>
+        <button class="secondary-button" id="demoButton" type="button">Use demo CSV</button>
+      </div>
+      <div class="dataset-status" id="datasetStatus" role="status" aria-live="polite">Showing the bundled demo CSV. Uploads stay in this local server session.</div>
+    </section>
+
+    <section class="panel trace-panel" aria-label="Workflow and model call trace">
+      <div class="trace-heading"><h2>Workflow trace</h2><p>Shows exactly which stages are local, external APIs, or model calls.</p></div>
+      <div class="trace-grid" id="traceGrid"></div>
+    </section>
+
+    <section class="panel control-panel" aria-label="Clustering controls">
+      <div class="control-grid">
+        <div>
+          <div class="control-copy">
+            <h2>Prototype count (K)</h2>
+            <p>Sets the rough number of semantic groups before fuzzy overlap is applied.</p>
+          </div>
+          <div class="slider-row">
+            <input id="clusterCount" type="range" min="3" max="7" step="1" value="3" aria-label="Prototype count">
+            <output id="clusterCountValue" for="clusterCount">3</output>
+          </div>
+        </div>
+        <div>
+          <div class="control-copy">
+            <h2>Membership cutoff</h2>
+            <p>Counts a prospect in every prototype whose independent affinity clears this value.</p>
+          </div>
+          <div class="slider-row">
+            <input id="threshold" type="range" min="0.10" max="0.90" step="0.01" value="0.40" aria-label="Membership cutoff">
+            <output id="thresholdValue" for="threshold">0.40</output>
+          </div>
+        </div>
+      </div>
+      <div class="field-control">
+        <div class="control-copy">
+          <h2>CSV columns</h2>
+          <p>Choose the descriptive fields that define similarity. The first use of a field sends its nonblank values to OpenAI for embedding; later combinations reuse locally cached vectors. Blank values contribute nothing, and identifiers and numeric fields are excluded.</p>
+        </div>
+        <div class="field-toggle-list" id="fieldToggleList" aria-label="CSV columns used for clustering"></div>
+        <div class="field-status" id="fieldStatus" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Overlap summary">
+      <article class="panel stat"><div class="stat-label">Zero clusters</div><div class="stat-value" id="zeroCount">0</div></article>
+      <article class="panel stat"><div class="stat-label">Exactly one</div><div class="stat-value" id="oneCount">0</div></article>
+      <article class="panel stat"><div class="stat-label">Two clusters</div><div class="stat-value" id="twoCount">0</div></article>
+      <article class="panel stat"><div class="stat-label">Three or more</div><div class="stat-value" id="threeCount">0</div></article>
+    </section>
+
+    <section class="visual-grid">
+      <aside class="panel side-panel">
+        <h2>Persona candidates</h2>
+        <p class="representative-note">Highest-affinity examples are ranked independently of the membership cutoff. An example can appear here without being included in the prospect count.</p>
+        <div class="cluster-list-header" aria-hidden="true"><span>Key</span><span>Persona candidate</span><span>Prospects</span><span>Select</span></div>
+        <div class="cluster-list" id="clusterList"></div>
+        <div class="pain-point-action">
+          <button class="pain-point-button" id="painPointButton" type="button" aria-describedby="painPointNote">Search market pain-points</button>
+          <span class="pain-point-note" id="painPointNote">Uses only the visible text from selected Persona candidates.</span>
+        </div>
+        <div class="pain-point-result" id="painPointResult" hidden>
+          <h3>NewsAPI query request</h3>
+          <pre id="painPointJson"></pre>
+        </div>
+        <div class="news-status" id="newsStatus" role="status" aria-live="polite" hidden></div>
+        <section class="article-results" id="articleResults" aria-labelledby="articleResultsHeading" hidden>
+          <div class="article-results-heading">
+            <h3 id="articleResultsHeading">Current operational pain hypotheses</h3>
+            <span id="articleCount"></span>
+          </div>
+          <div id="painAnalysis"></div>
+        </section>
+        <h2 class="overlap-title">Largest intersections</h2>
+        <div class="overlap-list" id="overlapList" aria-live="polite"></div>
+      </aside>
+      <article class="panel chart-panel">
+        <div class="panel-heading">
+          <div><h2>Embedding projection</h2><p>Fill shows strongest affinity. A dark ring indicates overlapping membership at the current cutoff.</p></div>
+        </div>
+        <svg id="scatter" role="img" aria-label="PCA projection of the selected CSV-column embeddings"></svg>
+      </article>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="panel-heading">
+        <div><h2>Prospect memberships</h2><p>Sorted by the number of clusters cleared, then strongest affinity.</p></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th id="displayHeader0">Prospect</th><th id="displayHeader1">Title</th><th id="displayHeader2">Company</th><th>Persona candidates</th></tr></thead>
+          <tbody id="prospectRows"></tbody>
+        </table>
+      </div>
+    </section>
+    <p class="footnote">Memberships are independently calibrated prototype affinities, not probabilities. Human-readable cluster labels summarize representative examples and do not determine membership. The native Fuzzy C-Means memberships remain available in the project CSV.</p>
+  </main>
+  <div class="tooltip" id="tooltip" role="tooltip"></div>
+  <script>
+    const DATA = {"datasetId": "demo", "datasetName": "B2B AI Startups Marketing Tech Export.csv", "isDemo": true, "records": [{"index": 0, "rowId": "source_row_0", "name": "Gary Vaynerchuk", "title": "CEO", "company": "Vayner3", "x": -0.085151, "y": -0.1711}, {"index": 1, "rowId": "source_row_1", "name": "Kevin O'Leary", "title": "Investor, Strategic Advisor", "company": "Tax Hive", "x": 0.318414, "y": 0.248182}, {"index": 2, "rowId": "source_row_2", "name": "Ryan Reynolds", "title": "Co-Founder", "company": "Group Effort Initiative", "x": -0.404706, "y": 0.014761}, {"index": 3, "rowId": "source_row_3", "name": "Steven Bartlett", "title": "Investor", "company": "Stan", "x": 0.249768, "y": 0.500381}, {"index": 4, "rowId": "source_row_4", "name": "Tiến Nguyễn Duy", "title": "Embaixadora", "company": "121 Smart Shop", "x": 0.377305, "y": -0.08343}, {"index": 5, "rowId": "source_row_5", "name": "Reid Hoffman", "title": "Co-Founder, Board Member", "company": "Inflection AI", "x": -0.309379, "y": -0.038283}, {"index": 6, "rowId": "source_row_6", "name": "Tim Tebow", "title": "Board Member", "company": "DejaVuAI", "x": 0.119128, "y": -0.064136}, {"index": 7, "rowId": "source_row_7", "name": "Andrew Huberman", "title": "Scientific Advisor", "company": "Function Health", "x": 0.357347, "y": -0.174012}, {"index": 8, "rowId": "source_row_8", "name": "Steve Nouri", "title": "Advisor - founding member", "company": "Wand", "x": -0.001043, "y": -0.021826}, {"index": 9, "rowId": "source_row_9", "name": "Ryan Holmes", "title": "Co-Founder & Chairman", "company": "LOI Venture", "x": -0.345774, "y": -0.069501}, {"index": 10, "rowId": "source_row_10", "name": "Tim Brown", "title": "Cofounder and Chief Evangelist", "company": "Neol", "x": -0.288576, "y": -0.018981}, {"index": 11, "rowId": "source_row_11", "name": "Tejaswee Tripathy", "title": "Chief Human Resources Officer", "company": "FinocontrolTM", "x": 0.156762, "y": -0.388212}, {"index": 12, "rowId": "source_row_12", "name": "Alex Hormozi", "title": "Managing Partner", "company": "Acquisition.com", "x": 0.034416, "y": -0.011968}, {"index": 13, "rowId": "source_row_13", "name": "Sanyin Siang", "title": "Advisor to the CEO", "company": "Privateer Space", "x": 0.183761, "y": -0.154789}, {"index": 14, "rowId": "source_row_14", "name": "Suze Orman", "title": "Co-Founder, SecureSave", "company": "Secure", "x": -0.204805, "y": 0.080471}, {"index": 15, "rowId": "source_row_15", "name": "Camila Farani", "title": "Fundador", "company": "Farani Escola de Negócios", "x": -0.241931, "y": 0.090137}, {"index": 16, "rowId": "source_row_16", "name": "Dr Ola Brown", "title": "Founding Partner", "company": "HealthCap Africa", "x": -0.232165, "y": 0.075903}, {"index": 17, "rowId": "source_row_17", "name": "Justin Wright", "title": "beehiiv Author of Brilliance Brief", "company": "beehiiv", "x": 0.089563, "y": -0.127725}, {"index": 18, "rowId": "source_row_18", "name": "Robin Wauters", "title": "Venture Scout", "company": "EWOR", "x": 0.164522, "y": 0.2093}, {"index": 19, "rowId": "source_row_19", "name": "Dr. Joerg Storm", "title": "Investor & Advisory Board Member", "company": "Zapdeck", "x": 0.212702, "y": 0.204379}, {"index": 20, "rowId": "source_row_20", "name": "Gustavo Caetano", "title": "Partner", "company": "Mergus Ventures", "x": 0.112273, "y": 0.021612}, {"index": 21, "rowId": "source_row_21", "name": "Stephen Curry", "title": "Special Advisor", "company": "Penny Jar Capital", "x": 0.436467, "y": -0.189031}, {"index": 22, "rowId": "source_row_22", "name": "Aishwarya Srinivasan", "title": "Angel Investor", "company": "DynamoFL", "x": 0.147258, "y": 0.516003}, {"index": 23, "rowId": "source_row_23", "name": "Dave Kerpen", "title": "Vice President", "company": "Grateful", "x": 0.170423, "y": -0.086244}, {"index": 24, "rowId": "source_row_24", "name": "Cory Warfield", "title": "Strategic Advisor", "company": "Lattitude", "x": 0.392114, "y": -0.150808}, {"index": 25, "rowId": "source_row_25", "name": "Marco Gomes", "title": "Chief Information Officer", "company": "Hike", "x": 0.160564, "y": -0.292106}, {"index": 26, "rowId": "source_row_26", "name": "Reno Perry", "title": "Co-Founder", "company": "Wiseful", "x": -0.404706, "y": 0.014761}, {"index": 27, "rowId": "source_row_27", "name": "Jody Padar", "title": "Truth Advisor", "company": "Trullion", "x": 0.363778, "y": -0.145845}, {"index": 28, "rowId": "source_row_28", "name": "Vaibhav Sisinty", "title": "Founder", "company": "GrowthSchool", "x": -0.346659, "y": 0.051273}, {"index": 29, "rowId": "source_row_29", "name": "Henry Blodget", "title": "Chair and Co-Founder", "company": "Spooler Media", "x": -0.322199, "y": -0.073544}, {"index": 30, "rowId": "source_row_30", "name": "Amena Baig", "title": "Founder", "company": "WeSource HR", "x": -0.346659, "y": 0.051273}, {"index": 31, "rowId": "source_row_31", "name": "Frank Thelen", "title": "Seed Investor", "company": "United Manufacturing Hub (UMH)", "x": 0.098053, "y": 0.476055}, {"index": 32, "rowId": "source_row_32", "name": "Michelle Zampiere", "title": "Consultora de Recursos Humanos", "company": "Ully Oficial", "x": 0.391463, "y": -0.258972}, {"index": 33, "rowId": "source_row_33", "name": "Alex Rodriguez", "title": "Co-Founder", "company": "Mojo", "x": -0.404706, "y": 0.014761}, {"index": 34, "rowId": "source_row_34", "name": "Ishan Sharma", "title": "Co-Founder", "company": "MarkitUp", "x": -0.404706, "y": 0.014761}, {"index": 35, "rowId": "source_row_35", "name": "Dennis R. Mortensen", "title": "CEO and Founder", "company": "LaunchBrightly", "x": -0.307482, "y": -0.111346}, {"index": 36, "rowId": "source_row_36", "name": "Atif Rafiq", "title": "CEO & Co-founder", "company": "Ritual", "x": -0.322691, "y": -0.116226}, {"index": 37, "rowId": "source_row_37", "name": "Andréa Greco", "title": "Mentora de Carreiras, Networking e LinkedIn", "company": "eMentor.br", "x": 0.323898, "y": -0.119052}, {"index": 38, "rowId": "source_row_38", "name": "Nansi Mishra", "title": "Co-Founder", "company": "Neon", "x": -0.404706, "y": 0.014761}, {"index": 39, "rowId": "source_row_39", "name": "André Forastieri", "title": "Fundador", "company": "HOMEWORK", "x": -0.241931, "y": 0.090137}, {"index": 40, "rowId": "source_row_40", "name": "Mohamed (Nagaty) Aboulnaga", "title": "Cofounder and executive chairman", "company": "Exits MENA", "x": -0.325761, "y": -0.081529}, {"index": 41, "rowId": "source_row_41", "name": "Mark Hyman, MD", "title": "Co-Founder and Chief Medical Officer", "company": "Function Health", "x": -0.288656, "y": -0.175706}, {"index": 42, "rowId": "source_row_42", "name": "Oana Labes, MBA, CPA", "title": "Founder & CEO", "company": "Financiario", "x": -0.320468, "y": -0.069764}, {"index": 43, "rowId": "source_row_43", "name": "John Barrows", "title": "Advisory Board Member", "company": "Sales Community", "x": 0.271095, "y": -0.109838}, {"index": 44, "rowId": "source_row_44", "name": "Wagner Sousa", "title": "Talent Acquisition", "company": "headhunters.io", "x": 0.279816, "y": -0.082667}, {"index": 45, "rowId": "source_row_45", "name": "Ryan Serhant", "title": "Investor", "company": "RLTY Capital", "x": 0.249768, "y": 0.500381}, {"index": 46, "rowId": "source_row_46", "name": "Leila Hormozi", "title": "Executive Chairwoman", "company": "Acquisition.com", "x": 0.105499, "y": -0.177052}, {"index": 47, "rowId": "source_row_47", "name": "Patricia Pessoa Pousa", "title": "Influenciadora", "company": "Gombo", "x": 0.327937, "y": -0.081738}, {"index": 48, "rowId": "source_row_48", "name": "Samara Souza", "title": "Mentora", "company": "eMentor", "x": 0.31351, "y": -0.059867}, {"index": 49, "rowId": "source_row_49", "name": "Tobi Oluwole", "title": "Angel Investor", "company": "Stan", "x": 0.147258, "y": 0.516003}], "models": {"3": {"labels": ["Advisors and board members", "Founders and CEOs", "Investors and venture partners with strong overlap among founders and ceos"], "descriptions": ["Representative roles include Co-Founder, Strategic Advisor, and Special Advisor.", "Representative roles include Co-Founder, Founder, and Fundador.", "Representative roles include Investor, Co-Founder, and Angel Investor."], "evidence": [{"Job Title": "Co-Founder, Strategic Advisor, and Special Advisor"}, {"Job Title": "Co-Founder, Founder, and Fundador"}, {"Job Title": "Investor, Co-Founder, and Angel Investor"}], "personaGrounding": [{"candidateId": "K3-C0", "descriptionEvidence": [{"evidenceId": "ev_8a7d83a18739ce41", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_c7d9c1e74032038e", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_2ba89c0272af0791", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_1731ce3a96bfb3ff", "rowId": "source_row_8", "field": "Job Title", "value": "Advisor - founding member"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Strategic Advisor, and Special Advisor", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_8a7d83a18739ce41", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_c7d9c1e74032038e", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_2ba89c0272af0791", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_1731ce3a96bfb3ff", "rowId": "source_row_8", "field": "Job Title", "value": "Advisor - founding member"}]}], "sourceEvidence": [{"evidenceId": "ev_8a7d83a18739ce41", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_c7d9c1e74032038e", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_2ba89c0272af0791", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_1731ce3a96bfb3ff", "rowId": "source_row_8", "field": "Job Title", "value": "Advisor - founding member"}]}, {"candidateId": "K3-C1", "descriptionEvidence": [{"evidenceId": "ev_0accce6e1fafc320", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_348ee1c798da0739", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_9285a4370c9f04dc", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_eefb88e9dc57f83b", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Founder, and Fundador", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_0accce6e1fafc320", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_348ee1c798da0739", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_9285a4370c9f04dc", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_eefb88e9dc57f83b", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}]}], "sourceEvidence": [{"evidenceId": "ev_0accce6e1fafc320", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_348ee1c798da0739", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_9285a4370c9f04dc", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_eefb88e9dc57f83b", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}]}, {"candidateId": "K3-C2", "descriptionEvidence": [{"evidenceId": "ev_c667e58c578d7191", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_117497296c02768b", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_562b6f0c62b80d02", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}, {"evidenceId": "ev_fe140c2bed220982", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}], "fieldSummaries": [{"field": "Job Title", "summary": "Investor, Co-Founder, and Angel Investor", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_c667e58c578d7191", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_117497296c02768b", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_562b6f0c62b80d02", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}, {"evidenceId": "ev_fe140c2bed220982", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}]}], "sourceEvidence": [{"evidenceId": "ev_c667e58c578d7191", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_117497296c02768b", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_562b6f0c62b80d02", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}, {"evidenceId": "ev_fe140c2bed220982", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}]}], "memberships": [[0.466404, 0.253219, 0.229496], [0.77455, 0.049571, 1.0], [0.229496, 0.882481, 0.334078], [0.045554, 0.031652, 0.910946], [0.002915, 0.0, 0.000544], [0.103418, 0.466404, 0.186589], [0.305459, 0.13281, 0.090507], [0.724052, 0.004352, 0.014688], [0.827342, 0.207303, 0.543991], [0.090507, 0.585819, 0.103418], [0.004352, 0.278523, 0.018674], [0.058301, 0.018674, 0.004352], [0.334078, 0.186589, 0.167303], [0.882481, 0.167303, 0.675798], [0.0, 0.058301, 8e-06], [0.031652, 0.319555, 0.063025], [0.13281, 0.364431, 0.207303], [8e-06, 6.8e-05, 0.0], [0.018674, 0.014688, 0.04176], [0.585819, 0.117502, 0.827342], [0.543991, 0.149394, 0.253219], [0.940016, 0.001062, 0.028687], [0.007288, 0.073227, 0.749017], [0.504203, 0.090507, 0.149394], [1.0, 0.011313, 0.504203], [0.000229, 0.002915, 6.8e-05], [0.229496, 0.882481, 0.334078], [0.629738, 0.001836, 0.006196], [0.380274, 0.699648, 0.607514], [0.117502, 0.543991, 0.078717], [0.380274, 0.699648, 0.607514], [0.001836, 0.04176, 0.430543], [0.023324, 0.000229, 0.001836], [0.229496, 0.882481, 0.334078], [0.229496, 0.882481, 0.334078], [0.078717, 0.430543, 0.049571], [0.149394, 0.504203, 0.117502], [0.000544, 0.000544, 0.001062], [0.229496, 0.882481, 0.334078], [0.031652, 0.319555, 0.063025], [0.014688, 0.396569, 0.034815], [0.001062, 0.229496, 0.002915], [0.430543, 0.629738, 0.466404], [0.675798, 0.023324, 0.13281], [0.011313, 0.006196, 0.0085], [0.045554, 0.031652, 0.910946], [0.067999, 0.103418, 0.023324], [6.8e-05, 8e-06, 0.000229], [0.167303, 0.0085, 0.011313], [0.007288, 0.073227, 0.749017]], "representativeAccounts": [[{"index": 24, "rowId": "source_row_24", "score": 1.0, "displayValues": {"Full Name": "Cory Warfield", "Job Title": "Strategic Advisor", "Company": "Lattitude"}, "fieldValues": {"Job Title": "Strategic Advisor"}}, {"index": 21, "rowId": "source_row_21", "score": 0.940016, "displayValues": {"Full Name": "Stephen Curry", "Job Title": "Special Advisor", "Company": "Penny Jar Capital"}, "fieldValues": {"Job Title": "Special Advisor"}}, {"index": 13, "rowId": "source_row_13", "score": 0.882481, "displayValues": {"Full Name": "Sanyin Siang", "Job Title": "Advisor to the CEO", "Company": "Privateer Space"}, "fieldValues": {"Job Title": "Advisor to the CEO"}}], [{"index": 2, "rowId": "source_row_2", "score": 0.882481, "displayValues": {"Full Name": "Ryan Reynolds", "Job Title": "Co-Founder", "Company": "Group Effort Initiative"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 26, "rowId": "source_row_26", "score": 0.882481, "displayValues": {"Full Name": "Reno Perry", "Job Title": "Co-Founder", "Company": "Wiseful"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 33, "rowId": "source_row_33", "score": 0.882481, "displayValues": {"Full Name": "Alex Rodriguez", "Job Title": "Co-Founder", "Company": "Mojo"}, "fieldValues": {"Job Title": "Co-Founder"}}], [{"index": 1, "rowId": "source_row_1", "score": 1.0, "displayValues": {"Full Name": "Kevin O'Leary", "Job Title": "Investor, Strategic Advisor", "Company": "Tax Hive"}, "fieldValues": {"Job Title": "Investor, Strategic Advisor"}}, {"index": 3, "rowId": "source_row_3", "score": 0.910946, "displayValues": {"Full Name": "Steven Bartlett", "Job Title": "Investor", "Company": "Stan"}, "fieldValues": {"Job Title": "Investor"}}, {"index": 45, "rowId": "source_row_45", "score": 0.910946, "displayValues": {"Full Name": "Ryan Serhant", "Job Title": "Investor", "Company": "RLTY Capital"}, "fieldValues": {"Job Title": "Investor"}}]]}, "4": {"labels": ["Advisors and board members", "Founders and CEOs — Co-Founder / Founder profiles", "Investors and venture partners with strong overlap among advisors and board members", "Founders and CEOs — Co-Founder / Founder profiles 2"], "descriptions": ["Representative roles include Scientific Advisor, Strategic Advisor, and Special Advisor.", "Representative roles include Co-Founder, Founder, and Chair and Co-Founder.", "Representative roles include Investor, Angel Investor, and Investor, Strategic Advisor.", "Representative roles include Co-Founder, Founder, and Fundador."], "evidence": [{"Job Title": "Scientific Advisor, Strategic Advisor, and Special Advisor"}, {"Job Title": "Co-Founder, Founder, and Chair and Co-Founder"}, {"Job Title": "Investor, Angel Investor, and Investor, Strategic Advisor"}, {"Job Title": "Co-Founder, Founder, and Fundador"}], "personaGrounding": [{"candidateId": "K4-C0", "descriptionEvidence": [{"evidenceId": "ev_20129a05fab7ba38", "rowId": "source_row_7", "field": "Job Title", "value": "Scientific Advisor"}, {"evidenceId": "ev_5ac1fb3367b00f3d", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_12867e3aa7f2e903", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_87f27cc2bfefbc29", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}], "fieldSummaries": [{"field": "Job Title", "summary": "Scientific Advisor, Strategic Advisor, and Special Advisor", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_20129a05fab7ba38", "rowId": "source_row_7", "field": "Job Title", "value": "Scientific Advisor"}, {"evidenceId": "ev_5ac1fb3367b00f3d", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_12867e3aa7f2e903", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_87f27cc2bfefbc29", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}]}], "sourceEvidence": [{"evidenceId": "ev_20129a05fab7ba38", "rowId": "source_row_7", "field": "Job Title", "value": "Scientific Advisor"}, {"evidenceId": "ev_5ac1fb3367b00f3d", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_12867e3aa7f2e903", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_87f27cc2bfefbc29", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}]}, {"candidateId": "K4-C1", "descriptionEvidence": [{"evidenceId": "ev_9906c5b5488cb35a", "rowId": "source_row_29", "field": "Job Title", "value": "Chair and Co-Founder"}, {"evidenceId": "ev_ac77c6ede2cfa9dd", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_cca10bf506ad4f07", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_942540a999bbdd4b", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Founder, and Chair and Co-Founder", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_9906c5b5488cb35a", "rowId": "source_row_29", "field": "Job Title", "value": "Chair and Co-Founder"}, {"evidenceId": "ev_ac77c6ede2cfa9dd", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_cca10bf506ad4f07", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_942540a999bbdd4b", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}]}], "sourceEvidence": [{"evidenceId": "ev_9906c5b5488cb35a", "rowId": "source_row_29", "field": "Job Title", "value": "Chair and Co-Founder"}, {"evidenceId": "ev_ac77c6ede2cfa9dd", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_cca10bf506ad4f07", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_942540a999bbdd4b", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}]}, {"candidateId": "K4-C2", "descriptionEvidence": [{"evidenceId": "ev_31350ba83bdb800e", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_52acf313cd7262ae", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_5d74624762c524d7", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}, {"evidenceId": "ev_fec2bfc7fb0c1518", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}], "fieldSummaries": [{"field": "Job Title", "summary": "Investor, Angel Investor, and Investor, Strategic Advisor", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_31350ba83bdb800e", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_52acf313cd7262ae", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_5d74624762c524d7", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}, {"evidenceId": "ev_fec2bfc7fb0c1518", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}]}], "sourceEvidence": [{"evidenceId": "ev_31350ba83bdb800e", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_52acf313cd7262ae", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_5d74624762c524d7", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}, {"evidenceId": "ev_fec2bfc7fb0c1518", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}]}, {"candidateId": "K4-C3", "descriptionEvidence": [{"evidenceId": "ev_2d455a3ef73858c2", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_49316658ba9b44f0", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_306376c2f00c3d2b", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_a209c5cb4392f4ec", "rowId": "source_row_5", "field": "Job Title", "value": "Co-Founder, Board Member"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Founder, and Fundador", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_2d455a3ef73858c2", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_49316658ba9b44f0", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_306376c2f00c3d2b", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_a209c5cb4392f4ec", "rowId": "source_row_5", "field": "Job Title", "value": "Co-Founder, Board Member"}]}], "sourceEvidence": [{"evidenceId": "ev_2d455a3ef73858c2", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_49316658ba9b44f0", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_306376c2f00c3d2b", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_a209c5cb4392f4ec", "rowId": "source_row_5", "field": "Job Title", "value": "Co-Founder, Board Member"}]}], "memberships": [[0.504203, 0.364431, 0.305459, 0.253219], [0.724052, 0.078717, 1.0, 0.049571], [0.207303, 0.77455, 0.186589, 0.882481], [0.063025, 0.031652, 0.910946, 0.031652], [0.001062, 6.8e-05, 0.001062, 0.0], [0.04176, 0.430543, 0.103418, 0.585819], [0.396569, 0.13281, 0.253219, 0.13281], [1.0, 0.004352, 0.028687, 0.004352], [0.77455, 0.229496, 0.585819, 0.229496], [0.078717, 0.629738, 0.078717, 0.543991], [0.004352, 0.253219, 0.006196, 0.278523], [0.090507, 0.04176, 0.004352, 0.014688], [0.334078, 0.167303, 0.278523, 0.186589], [0.827342, 0.186589, 0.629738, 0.149394], [0.0, 0.011313, 8e-06, 0.078717], [0.020913, 0.291784, 0.045554, 0.349035], [0.049571, 0.334078, 0.13281, 0.396569], [8e-06, 0.0, 0.0, 8e-06], [0.117502, 0.014688, 0.090507, 0.023324], [0.585819, 0.117502, 0.827342, 0.067999], [0.466404, 0.103418, 0.466404, 0.167303], [0.882481, 0.001836, 0.117502, 0.001062], [0.00984, 0.053818, 0.749017, 0.096819], [0.543991, 0.090507, 0.430543, 0.117502], [0.940016, 0.023324, 0.675798, 0.011313], [0.000229, 0.002915, 6.8e-05, 0.002915], [0.207303, 0.77455, 0.186589, 0.882481], [0.629738, 0.001062, 0.014688, 0.001836], [0.291784, 0.523845, 0.380274, 0.699648], [0.149394, 1.0, 0.058301, 0.466404], [0.291784, 0.523845, 0.380274, 0.699648], [0.002915, 0.018674, 0.543991, 0.058301], [0.034815, 0.000544, 0.002915, 0.000544], [0.207303, 0.77455, 0.186589, 0.882481], [0.207303, 0.77455, 0.186589, 0.882481], [0.028687, 0.466404, 0.034815, 0.430543], [0.103418, 0.585819, 0.067999, 0.504203], [0.000544, 0.000229, 0.000544, 0.000229], [0.207303, 0.77455, 0.186589, 0.882481], [0.020913, 0.291784, 0.045554, 0.349035], [0.006196, 0.396569, 0.023324, 0.305459], [0.001836, 0.207303, 0.001836, 0.207303], [0.364431, 0.940016, 0.334078, 0.629738], [0.675798, 0.067999, 0.504203, 0.018674], [0.014688, 0.006196, 0.0085, 0.006196], [0.063025, 0.031652, 0.910946, 0.031652], [0.13281, 0.149394, 0.018674, 0.04176], [6.8e-05, 8e-06, 0.000229, 6.8e-05], [0.430543, 0.0085, 0.011313, 0.0085], [0.00984, 0.053818, 0.749017, 0.096819]], "representativeAccounts": [[{"index": 7, "rowId": "source_row_7", "score": 1.0, "displayValues": {"Full Name": "Andrew Huberman", "Job Title": "Scientific Advisor", "Company": "Function Health"}, "fieldValues": {"Job Title": "Scientific Advisor"}}, {"index": 24, "rowId": "source_row_24", "score": 0.940016, "displayValues": {"Full Name": "Cory Warfield", "Job Title": "Strategic Advisor", "Company": "Lattitude"}, "fieldValues": {"Job Title": "Strategic Advisor"}}, {"index": 21, "rowId": "source_row_21", "score": 0.882481, "displayValues": {"Full Name": "Stephen Curry", "Job Title": "Special Advisor", "Company": "Penny Jar Capital"}, "fieldValues": {"Job Title": "Special Advisor"}}], [{"index": 29, "rowId": "source_row_29", "score": 1.0, "displayValues": {"Full Name": "Henry Blodget", "Job Title": "Chair and Co-Founder", "Company": "Spooler Media"}, "fieldValues": {"Job Title": "Chair and Co-Founder"}}, {"index": 42, "rowId": "source_row_42", "score": 0.940016, "displayValues": {"Full Name": "Oana Labes, MBA, CPA", "Job Title": "Founder & CEO", "Company": "Financiario"}, "fieldValues": {"Job Title": "Founder & CEO"}}, {"index": 2, "rowId": "source_row_2", "score": 0.77455, "displayValues": {"Full Name": "Ryan Reynolds", "Job Title": "Co-Founder", "Company": "Group Effort Initiative"}, "fieldValues": {"Job Title": "Co-Founder"}}], [{"index": 1, "rowId": "source_row_1", "score": 1.0, "displayValues": {"Full Name": "Kevin O'Leary", "Job Title": "Investor, Strategic Advisor", "Company": "Tax Hive"}, "fieldValues": {"Job Title": "Investor, Strategic Advisor"}}, {"index": 3, "rowId": "source_row_3", "score": 0.910946, "displayValues": {"Full Name": "Steven Bartlett", "Job Title": "Investor", "Company": "Stan"}, "fieldValues": {"Job Title": "Investor"}}, {"index": 45, "rowId": "source_row_45", "score": 0.910946, "displayValues": {"Full Name": "Ryan Serhant", "Job Title": "Investor", "Company": "RLTY Capital"}, "fieldValues": {"Job Title": "Investor"}}], [{"index": 2, "rowId": "source_row_2", "score": 0.882481, "displayValues": {"Full Name": "Ryan Reynolds", "Job Title": "Co-Founder", "Company": "Group Effort Initiative"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 26, "rowId": "source_row_26", "score": 0.882481, "displayValues": {"Full Name": "Reno Perry", "Job Title": "Co-Founder", "Company": "Wiseful"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 33, "rowId": "source_row_33", "score": 0.882481, "displayValues": {"Full Name": "Alex Rodriguez", "Job Title": "Co-Founder", "Company": "Mojo"}, "fieldValues": {"Job Title": "Co-Founder"}}]]}, "5": {"labels": ["Investors and venture partners", "Founders and CEOs — Co-Founder / Partner profiles", "Founders and CEOs — Co-Founder / Fundador profiles", "Founders and CEOs — Co-Founder / Founder profiles", "Advisors and board members"], "descriptions": ["Representative roles include Co-Founder, Angel Investor, and Investor.", "Representative roles include Co-Founder, Partner, and Founder.", "Representative roles include Co-Founder, Fundador, and Founder.", "Representative roles include Co-Founder, Founder, and Founder & CEO.", "Representative roles include Scientific Advisor, Strategic Advisor, and Special Advisor."], "evidence": [{"Job Title": "Co-Founder, Angel Investor, and Investor"}, {"Job Title": "Co-Founder, Partner, and Founder"}, {"Job Title": "Co-Founder, Fundador, and Founder"}, {"Job Title": "Co-Founder, Founder, and Founder & CEO"}, {"Job Title": "Scientific Advisor, Strategic Advisor, and Special Advisor"}], "personaGrounding": [{"candidateId": "K5-C0", "descriptionEvidence": [{"evidenceId": "ev_6117ef7008628914", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}, {"evidenceId": "ev_417e7ab6624e2dd5", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_187191a19213c001", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_38bc55c0f7ce0a4f", "rowId": "source_row_31", "field": "Job Title", "value": "Seed Investor"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Angel Investor, and Investor", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_6117ef7008628914", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}, {"evidenceId": "ev_417e7ab6624e2dd5", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_187191a19213c001", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_38bc55c0f7ce0a4f", "rowId": "source_row_31", "field": "Job Title", "value": "Seed Investor"}]}], "sourceEvidence": [{"evidenceId": "ev_6117ef7008628914", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}, {"evidenceId": "ev_417e7ab6624e2dd5", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_187191a19213c001", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_38bc55c0f7ce0a4f", "rowId": "source_row_31", "field": "Job Title", "value": "Seed Investor"}]}, {"candidateId": "K5-C1", "descriptionEvidence": [{"evidenceId": "ev_5e2ebebf8b078328", "rowId": "source_row_20", "field": "Job Title", "value": "Partner"}, {"evidenceId": "ev_c7ab4dcbcc5b4ea3", "rowId": "source_row_12", "field": "Job Title", "value": "Managing Partner"}, {"evidenceId": "ev_024c1eb38338af19", "rowId": "source_row_16", "field": "Job Title", "value": "Founding Partner"}, {"evidenceId": "ev_81a81fffcafee470", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Partner, and Founder", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_5e2ebebf8b078328", "rowId": "source_row_20", "field": "Job Title", "value": "Partner"}, {"evidenceId": "ev_c7ab4dcbcc5b4ea3", "rowId": "source_row_12", "field": "Job Title", "value": "Managing Partner"}, {"evidenceId": "ev_024c1eb38338af19", "rowId": "source_row_16", "field": "Job Title", "value": "Founding Partner"}, {"evidenceId": "ev_81a81fffcafee470", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}]}], "sourceEvidence": [{"evidenceId": "ev_5e2ebebf8b078328", "rowId": "source_row_20", "field": "Job Title", "value": "Partner"}, {"evidenceId": "ev_c7ab4dcbcc5b4ea3", "rowId": "source_row_12", "field": "Job Title", "value": "Managing Partner"}, {"evidenceId": "ev_024c1eb38338af19", "rowId": "source_row_16", "field": "Job Title", "value": "Founding Partner"}, {"evidenceId": "ev_81a81fffcafee470", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}]}, {"candidateId": "K5-C2", "descriptionEvidence": [{"evidenceId": "ev_3b922f4673a20059", "rowId": "source_row_15", "field": "Job Title", "value": "Fundador"}, {"evidenceId": "ev_fb1ede177454fb3a", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_ac1c9a79ecc52d8c", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_2f67f4386497dd45", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Fundador, and Founder", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_3b922f4673a20059", "rowId": "source_row_15", "field": "Job Title", "value": "Fundador"}, {"evidenceId": "ev_fb1ede177454fb3a", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_ac1c9a79ecc52d8c", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_2f67f4386497dd45", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}]}], "sourceEvidence": [{"evidenceId": "ev_3b922f4673a20059", "rowId": "source_row_15", "field": "Job Title", "value": "Fundador"}, {"evidenceId": "ev_fb1ede177454fb3a", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_ac1c9a79ecc52d8c", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_2f67f4386497dd45", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}]}, {"candidateId": "K5-C3", "descriptionEvidence": [{"evidenceId": "ev_d29eb24b3c835bde", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_66f7717cc80b8527", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_ffc3266f48826d7e", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_adeb56ea845a2895", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Founder, and Founder & CEO", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_d29eb24b3c835bde", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_66f7717cc80b8527", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_ffc3266f48826d7e", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_adeb56ea845a2895", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}]}], "sourceEvidence": [{"evidenceId": "ev_d29eb24b3c835bde", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_66f7717cc80b8527", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_ffc3266f48826d7e", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_adeb56ea845a2895", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}]}, {"candidateId": "K5-C4", "descriptionEvidence": [{"evidenceId": "ev_9c40e82caeb75eb9", "rowId": "source_row_7", "field": "Job Title", "value": "Scientific Advisor"}, {"evidenceId": "ev_a5cfc6afd94ea0d3", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_16eb83701fc75686", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_2d6f9404d4bd863a", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}], "fieldSummaries": [{"field": "Job Title", "summary": "Scientific Advisor, Strategic Advisor, and Special Advisor", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_9c40e82caeb75eb9", "rowId": "source_row_7", "field": "Job Title", "value": "Scientific Advisor"}, {"evidenceId": "ev_a5cfc6afd94ea0d3", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_16eb83701fc75686", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_2d6f9404d4bd863a", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}]}], "sourceEvidence": [{"evidenceId": "ev_9c40e82caeb75eb9", "rowId": "source_row_7", "field": "Job Title", "value": "Scientific Advisor"}, {"evidenceId": "ev_a5cfc6afd94ea0d3", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_16eb83701fc75686", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_2d6f9404d4bd863a", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}]}], "memberships": [[0.149394, 0.543991, 0.229496, 0.229496, 0.504203], [0.77455, 0.364431, 0.103418, 0.049571, 0.77455], [0.466404, 0.724052, 0.675798, 0.882481, 0.207303], [0.854615, 0.125, 0.063025, 0.031652, 0.053818], [0.002915, 0.000544, 0.000229, 0.0, 0.000544], [0.167303, 0.305459, 0.364431, 0.543991, 0.067999], [0.078717, 0.278523, 0.13281, 0.13281, 0.466404], [0.006196, 0.002915, 0.002915, 0.004352, 1.0], [0.207303, 0.167303, 0.278523, 0.207303, 0.724052], [0.090507, 0.229496, 0.466404, 0.585819, 0.117502], [0.049571, 0.011313, 0.253219, 0.278523, 0.004352], [0.000544, 0.04176, 0.011313, 0.014688, 0.103418], [0.13281, 0.940016, 0.207303, 0.186589, 0.278523], [0.278523, 0.396569, 0.186589, 0.167303, 0.827342], [0.000229, 8e-06, 0.0085, 0.117502, 0.0], [0.241163, 0.084475, 0.969699, 0.319555, 0.016601], [0.305459, 0.882481, 0.334078, 0.364431, 0.034815], [0.0, 0.0, 0.0, 0.000544, 8e-06], [0.364431, 0.014688, 0.018674, 0.018674, 0.078717], [0.675798, 0.149394, 0.117502, 0.103418, 0.585819], [0.186589, 1.0, 0.149394, 0.149394, 0.430543], [0.011313, 0.028687, 0.001062, 0.001062, 0.882481], [0.969699, 0.020913, 0.084475, 0.063025, 0.007288], [0.058301, 0.430543, 0.049571, 0.090507, 0.543991], [0.028687, 0.253219, 0.014688, 0.011313, 0.940016], [8e-06, 0.000229, 8e-06, 0.002915, 0.001062], [0.466404, 0.724052, 0.675798, 0.882481, 0.207303], [0.0085, 0.004352, 6.8e-05, 0.001836, 0.629738], [0.607514, 0.485058, 0.854615, 0.699648, 0.319555], [0.117502, 0.186589, 0.504203, 0.466404, 0.13281], [0.607514, 0.485058, 0.854615, 0.699648, 0.319555], [0.724052, 0.006196, 0.034815, 0.04176, 0.001836], [6.8e-05, 0.0085, 0.004352, 0.000229, 0.028687], [0.466404, 0.724052, 0.675798, 0.882481, 0.207303], [0.466404, 0.724052, 0.675798, 0.882481, 0.207303], [0.067999, 0.207303, 0.396569, 0.430543, 0.04176], [0.103418, 0.334078, 0.430543, 0.504203, 0.090507], [0.001062, 0.001062, 0.001836, 6.8e-05, 0.000229], [0.466404, 0.724052, 0.675798, 0.882481, 0.207303], [0.241163, 0.084475, 0.969699, 0.319555, 0.016601], [0.04176, 0.067999, 0.305459, 0.396569, 0.023324], [0.004352, 0.001836, 0.167303, 0.253219, 0.002915], [0.334078, 0.585819, 0.543991, 0.629738, 0.396569], [0.034815, 0.103418, 0.028687, 0.023324, 0.675798], [0.014688, 0.034815, 0.006196, 0.006196, 0.011313], [0.854615, 0.125, 0.063025, 0.031652, 0.053818], [0.023324, 0.058301, 0.04176, 0.078717, 0.149394], [0.001836, 6.8e-05, 0.000544, 8e-06, 6.8e-05], [0.018674, 0.049571, 0.023324, 0.0085, 0.364431], [0.969699, 0.020913, 0.084475, 0.063025, 0.007288]], "representativeAccounts": [[{"index": 22, "rowId": "source_row_22", "score": 0.969699, "displayValues": {"Full Name": "Aishwarya Srinivasan", "Job Title": "Angel Investor", "Company": "DynamoFL"}, "fieldValues": {"Job Title": "Angel Investor"}}, {"index": 49, "rowId": "source_row_49", "score": 0.969699, "displayValues": {"Full Name": "Tobi Oluwole", "Job Title": "Angel Investor", "Company": "Stan"}, "fieldValues": {"Job Title": "Angel Investor"}}, {"index": 3, "rowId": "source_row_3", "score": 0.854615, "displayValues": {"Full Name": "Steven Bartlett", "Job Title": "Investor", "Company": "Stan"}, "fieldValues": {"Job Title": "Investor"}}], [{"index": 20, "rowId": "source_row_20", "score": 1.0, "displayValues": {"Full Name": "Gustavo Caetano", "Job Title": "Partner", "Company": "Mergus Ventures"}, "fieldValues": {"Job Title": "Partner"}}, {"index": 12, "rowId": "source_row_12", "score": 0.940016, "displayValues": {"Full Name": "Alex Hormozi", "Job Title": "Managing Partner", "Company": "Acquisition.com"}, "fieldValues": {"Job Title": "Managing Partner"}}, {"index": 16, "rowId": "source_row_16", "score": 0.882481, "displayValues": {"Full Name": "Dr Ola Brown", "Job Title": "Founding Partner", "Company": "HealthCap Africa"}, "fieldValues": {"Job Title": "Founding Partner"}}], [{"index": 15, "rowId": "source_row_15", "score": 0.969699, "displayValues": {"Full Name": "Camila Farani", "Job Title": "Fundador", "Company": "Farani Escola de Negócios"}, "fieldValues": {"Job Title": "Fundador"}}, {"index": 39, "rowId": "source_row_39", "score": 0.969699, "displayValues": {"Full Name": "André Forastieri", "Job Title": "Fundador", "Company": "HOMEWORK"}, "fieldValues": {"Job Title": "Fundador"}}, {"index": 28, "rowId": "source_row_28", "score": 0.854615, "displayValues": {"Full Name": "Vaibhav Sisinty", "Job Title": "Founder", "Company": "GrowthSchool"}, "fieldValues": {"Job Title": "Founder"}}], [{"index": 2, "rowId": "source_row_2", "score": 0.882481, "displayValues": {"Full Name": "Ryan Reynolds", "Job Title": "Co-Founder", "Company": "Group Effort Initiative"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 26, "rowId": "source_row_26", "score": 0.882481, "displayValues": {"Full Name": "Reno Perry", "Job Title": "Co-Founder", "Company": "Wiseful"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 33, "rowId": "source_row_33", "score": 0.882481, "displayValues": {"Full Name": "Alex Rodriguez", "Job Title": "Co-Founder", "Company": "Mojo"}, "fieldValues": {"Job Title": "Co-Founder"}}], [{"index": 7, "rowId": "source_row_7", "score": 1.0, "displayValues": {"Full Name": "Andrew Huberman", "Job Title": "Scientific Advisor", "Company": "Function Health"}, "fieldValues": {"Job Title": "Scientific Advisor"}}, {"index": 24, "rowId": "source_row_24", "score": 0.940016, "displayValues": {"Full Name": "Cory Warfield", "Job Title": "Strategic Advisor", "Company": "Lattitude"}, "fieldValues": {"Job Title": "Strategic Advisor"}}, {"index": 21, "rowId": "source_row_21", "score": 0.882481, "displayValues": {"Full Name": "Stephen Curry", "Job Title": "Special Advisor", "Company": "Penny Jar Capital"}, "fieldValues": {"Job Title": "Special Advisor"}}]]}, "6": {"labels": ["Advisors and board members with strong overlap among founders and ceos", "Founders and CEOs — Co-Founder / Founder profiles", "Founders and CEOs — Co-Founder / Cofounder and executive chairman profiles", "Advisors and board members with strong overlap among investors and venture partners", "Founders and CEOs — Co-Founder / Founder profiles 2", "Advisors and board members"], "descriptions": ["Representative roles include Advisor to the CEO, CEO, and Strategic Advisor.", "Representative roles include Co-Founder, Founder, and Founder & CEO.", "Representative roles include Co-Founder, Cofounder and executive chairman, and Co-Founder & Chairman.", "Representative roles include Investor, Angel Investor, and Investor & Advisory Board Member.", "Representative roles include Co-Founder, Founder, and Chair and Co-Founder.", "Representative roles include Scientific Advisor, Strategic Advisor, and Special Advisor."], "evidence": [{"Job Title": "Advisor to the CEO, CEO, and Strategic Advisor"}, {"Job Title": "Co-Founder, Founder, and Founder & CEO"}, {"Job Title": "Co-Founder, Cofounder and executive chairman, and Co-Founder & Chairman"}, {"Job Title": "Investor, Angel Investor, and Investor & Advisory Board Member"}, {"Job Title": "Co-Founder, Founder, and Chair and Co-Founder"}, {"Job Title": "Scientific Advisor, Strategic Advisor, and Special Advisor"}], "personaGrounding": [{"candidateId": "K6-C0", "descriptionEvidence": [{"evidenceId": "ev_549bd2f88d2e43cd", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_7408dc1f03c6de6b", "rowId": "source_row_0", "field": "Job Title", "value": "CEO"}, {"evidenceId": "ev_5c701a105afdc6b8", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_f5298ae8f5b169b0", "rowId": "source_row_8", "field": "Job Title", "value": "Advisor - founding member"}], "fieldSummaries": [{"field": "Job Title", "summary": "Advisor to the CEO, CEO, and Strategic Advisor", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_549bd2f88d2e43cd", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_7408dc1f03c6de6b", "rowId": "source_row_0", "field": "Job Title", "value": "CEO"}, {"evidenceId": "ev_5c701a105afdc6b8", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_f5298ae8f5b169b0", "rowId": "source_row_8", "field": "Job Title", "value": "Advisor - founding member"}]}], "sourceEvidence": [{"evidenceId": "ev_549bd2f88d2e43cd", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_7408dc1f03c6de6b", "rowId": "source_row_0", "field": "Job Title", "value": "CEO"}, {"evidenceId": "ev_5c701a105afdc6b8", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_f5298ae8f5b169b0", "rowId": "source_row_8", "field": "Job Title", "value": "Advisor - founding member"}]}, {"candidateId": "K6-C1", "descriptionEvidence": [{"evidenceId": "ev_647fb098179b076e", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_9fdf9db141a5e14e", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_03e7af4e1c59546d", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_526bc8843c52c5e3", "rowId": "source_row_5", "field": "Job Title", "value": "Co-Founder, Board Member"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Founder, and Founder & CEO", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_647fb098179b076e", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_9fdf9db141a5e14e", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_03e7af4e1c59546d", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_526bc8843c52c5e3", "rowId": "source_row_5", "field": "Job Title", "value": "Co-Founder, Board Member"}]}], "sourceEvidence": [{"evidenceId": "ev_647fb098179b076e", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_9fdf9db141a5e14e", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_03e7af4e1c59546d", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_526bc8843c52c5e3", "rowId": "source_row_5", "field": "Job Title", "value": "Co-Founder, Board Member"}]}, {"candidateId": "K6-C2", "descriptionEvidence": [{"evidenceId": "ev_ff423dfef1c0856a", "rowId": "source_row_40", "field": "Job Title", "value": "Cofounder and executive chairman"}, {"evidenceId": "ev_b32e71b8afa60031", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}, {"evidenceId": "ev_6fc5eec443544272", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_3147f91d3a863d27", "rowId": "source_row_36", "field": "Job Title", "value": "CEO & Co-founder"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Cofounder and executive chairman, and Co-Founder & Chairman", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_ff423dfef1c0856a", "rowId": "source_row_40", "field": "Job Title", "value": "Cofounder and executive chairman"}, {"evidenceId": "ev_b32e71b8afa60031", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}, {"evidenceId": "ev_6fc5eec443544272", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_3147f91d3a863d27", "rowId": "source_row_36", "field": "Job Title", "value": "CEO & Co-founder"}]}], "sourceEvidence": [{"evidenceId": "ev_ff423dfef1c0856a", "rowId": "source_row_40", "field": "Job Title", "value": "Cofounder and executive chairman"}, {"evidenceId": "ev_b32e71b8afa60031", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}, {"evidenceId": "ev_6fc5eec443544272", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_3147f91d3a863d27", "rowId": "source_row_36", "field": "Job Title", "value": "CEO & Co-founder"}]}, {"candidateId": "K6-C3", "descriptionEvidence": [{"evidenceId": "ev_6c0a65e90729708a", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}, {"evidenceId": "ev_780c23077463e450", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_539fc437946cad76", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_e12931048368792b", "rowId": "source_row_43", "field": "Job Title", "value": "Advisory Board Member"}], "fieldSummaries": [{"field": "Job Title", "summary": "Investor, Angel Investor, and Investor & Advisory Board Member", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_6c0a65e90729708a", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}, {"evidenceId": "ev_780c23077463e450", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_539fc437946cad76", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_e12931048368792b", "rowId": "source_row_43", "field": "Job Title", "value": "Advisory Board Member"}]}], "sourceEvidence": [{"evidenceId": "ev_6c0a65e90729708a", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}, {"evidenceId": "ev_780c23077463e450", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_539fc437946cad76", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_e12931048368792b", "rowId": "source_row_43", "field": "Job Title", "value": "Advisory Board Member"}]}, {"candidateId": "K6-C4", "descriptionEvidence": [{"evidenceId": "ev_f256342d5af5725d", "rowId": "source_row_29", "field": "Job Title", "value": "Chair and Co-Founder"}, {"evidenceId": "ev_0dfb18a78c271de5", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_d17a96db2d624e5a", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_a079d5f559b56425", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Founder, and Chair and Co-Founder", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_f256342d5af5725d", "rowId": "source_row_29", "field": "Job Title", "value": "Chair and Co-Founder"}, {"evidenceId": "ev_0dfb18a78c271de5", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_d17a96db2d624e5a", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_a079d5f559b56425", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}]}], "sourceEvidence": [{"evidenceId": "ev_f256342d5af5725d", "rowId": "source_row_29", "field": "Job Title", "value": "Chair and Co-Founder"}, {"evidenceId": "ev_0dfb18a78c271de5", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_d17a96db2d624e5a", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_a079d5f559b56425", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}]}, {"candidateId": "K6-C5", "descriptionEvidence": [{"evidenceId": "ev_03457c7ac7634780", "rowId": "source_row_7", "field": "Job Title", "value": "Scientific Advisor"}, {"evidenceId": "ev_98b5c993e0f1c9cf", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_110b94fc0394c04f", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_e293594877eba932", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}], "fieldSummaries": [{"field": "Job Title", "summary": "Scientific Advisor, Strategic Advisor, and Special Advisor", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_03457c7ac7634780", "rowId": "source_row_7", "field": "Job Title", "value": "Scientific Advisor"}, {"evidenceId": "ev_98b5c993e0f1c9cf", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_110b94fc0394c04f", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_e293594877eba932", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}]}], "sourceEvidence": [{"evidenceId": "ev_03457c7ac7634780", "rowId": "source_row_7", "field": "Job Title", "value": "Scientific Advisor"}, {"evidenceId": "ev_98b5c993e0f1c9cf", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}, {"evidenceId": "ev_110b94fc0394c04f", "rowId": "source_row_21", "field": "Job Title", "value": "Special Advisor"}, {"evidenceId": "ev_e293594877eba932", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}]}], "memberships": [[0.940016, 0.207303, 0.364431, 0.103418, 0.253219, 0.430543], [0.77455, 0.034815, 0.078717, 0.940016, 0.058301, 0.77455], [0.305459, 0.882481, 0.675798, 0.186589, 0.827342, 0.149394], [0.063025, 0.045554, 0.038182, 0.854615, 0.038182, 0.218212], [0.000229, 0.0, 0.0, 0.001062, 8e-06, 0.001062], [0.149394, 0.585819, 0.396569, 0.504203, 0.430543, 0.034815], [0.078717, 0.117502, 0.117502, 0.724052, 0.13281, 0.253219], [0.117502, 0.004352, 0.004352, 0.018674, 0.004352, 1.0], [0.827342, 0.229496, 0.207303, 0.543991, 0.229496, 0.724052], [0.186589, 0.543991, 0.940016, 0.278523, 0.543991, 0.049571], [0.011313, 0.278523, 0.334078, 0.011313, 0.278523, 0.001836], [0.034815, 0.014688, 0.049571, 0.004352, 0.023324, 0.078717], [0.229496, 0.186589, 0.186589, 0.117502, 0.186589, 0.396569], [1.0, 0.149394, 0.167303, 0.585819, 0.167303, 0.827342], [8e-06, 0.13281, 0.018674, 8e-06, 0.011313, 0.0], [0.025913, 0.349035, 0.265671, 0.038182, 0.319555, 0.025913], [0.103418, 0.396569, 0.305459, 0.13281, 0.364431, 0.067999], [0.0, 8e-06, 0.000544, 0.0, 0.0, 8e-06], [0.0085, 0.023324, 0.011313, 0.067999, 0.018674, 0.364431], [0.543991, 0.058301, 0.13281, 1.0, 0.103418, 0.585819], [0.207303, 0.167303, 0.103418, 0.253219, 0.117502, 0.466404], [0.585819, 0.001062, 0.001062, 0.028687, 0.001836, 0.882481], [0.016601, 0.096819, 0.063025, 0.652497, 0.073227, 0.00984], [0.466404, 0.078717, 0.090507, 0.396569, 0.090507, 0.543991], [0.882481, 0.011313, 0.014688, 0.466404, 0.014688, 0.940016], [0.000544, 0.001836, 0.0085, 6.8e-05, 0.001062, 0.000229], [0.305459, 0.882481, 0.675798, 0.186589, 0.827342, 0.149394], [0.13281, 0.002915, 0.001836, 0.0085, 0.002915, 0.675798], [0.413324, 0.699648, 0.448235, 0.319555, 0.607514, 0.291784], [0.167303, 0.504203, 0.543991, 0.090507, 1.0, 0.090507], [0.413324, 0.699648, 0.448235, 0.319555, 0.607514, 0.291784], [0.002915, 0.067999, 0.023324, 0.430543, 0.028687, 0.004352], [0.006196, 0.000544, 0.000229, 0.001836, 0.000229, 0.103418], [0.305459, 0.882481, 0.675798, 0.186589, 0.827342, 0.149394], [0.305459, 0.882481, 0.675798, 0.186589, 0.827342, 0.149394], [0.629738, 0.430543, 0.504203, 0.049571, 0.466404, 0.018674], [0.675798, 0.466404, 0.827342, 0.078717, 0.504203, 0.04176], [0.001062, 0.000229, 6.8e-05, 0.000544, 0.000544, 0.000544], [0.305459, 0.882481, 0.675798, 0.186589, 0.827342, 0.149394], [0.025913, 0.349035, 0.265671, 0.038182, 0.319555, 0.025913], [0.049571, 0.305459, 1.0, 0.058301, 0.396569, 0.006196], [0.001836, 0.253219, 0.229496, 0.002915, 0.207303, 0.002915], [0.724052, 0.629738, 0.882481, 0.364431, 0.675798, 0.334078], [0.504203, 0.018674, 0.028687, 0.77455, 0.049571, 0.629738], [0.004352, 0.006196, 0.006196, 0.006196, 0.006196, 0.014688], [0.063025, 0.045554, 0.038182, 0.854615, 0.038182, 0.218212], [0.090507, 0.028687, 0.149394, 0.023324, 0.149394, 0.058301], [6.8e-05, 6.8e-05, 8e-06, 0.000229, 6.8e-05, 6.8e-05], [0.04176, 0.0085, 0.002915, 0.014688, 0.0085, 0.504203], [0.016601, 0.096819, 0.063025, 0.652497, 0.073227, 0.00984]], "representativeAccounts": [[{"index": 13, "rowId": "source_row_13", "score": 1.0, "displayValues": {"Full Name": "Sanyin Siang", "Job Title": "Advisor to the CEO", "Company": "Privateer Space"}, "fieldValues": {"Job Title": "Advisor to the CEO"}}, {"index": 0, "rowId": "source_row_0", "score": 0.940016, "displayValues": {"Full Name": "Gary Vaynerchuk", "Job Title": "CEO", "Company": "Vayner3"}, "fieldValues": {"Job Title": "CEO"}}, {"index": 24, "rowId": "source_row_24", "score": 0.882481, "displayValues": {"Full Name": "Cory Warfield", "Job Title": "Strategic Advisor", "Company": "Lattitude"}, "fieldValues": {"Job Title": "Strategic Advisor"}}], [{"index": 2, "rowId": "source_row_2", "score": 0.882481, "displayValues": {"Full Name": "Ryan Reynolds", "Job Title": "Co-Founder", "Company": "Group Effort Initiative"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 26, "rowId": "source_row_26", "score": 0.882481, "displayValues": {"Full Name": "Reno Perry", "Job Title": "Co-Founder", "Company": "Wiseful"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 33, "rowId": "source_row_33", "score": 0.882481, "displayValues": {"Full Name": "Alex Rodriguez", "Job Title": "Co-Founder", "Company": "Mojo"}, "fieldValues": {"Job Title": "Co-Founder"}}], [{"index": 40, "rowId": "source_row_40", "score": 1.0, "displayValues": {"Full Name": "Mohamed (Nagaty) Aboulnaga", "Job Title": "Cofounder and executive chairman", "Company": "Exits MENA"}, "fieldValues": {"Job Title": "Cofounder and executive chairman"}}, {"index": 9, "rowId": "source_row_9", "score": 0.940016, "displayValues": {"Full Name": "Ryan Holmes", "Job Title": "Co-Founder & Chairman", "Company": "LOI Venture"}, "fieldValues": {"Job Title": "Co-Founder & Chairman"}}, {"index": 42, "rowId": "source_row_42", "score": 0.882481, "displayValues": {"Full Name": "Oana Labes, MBA, CPA", "Job Title": "Founder & CEO", "Company": "Financiario"}, "fieldValues": {"Job Title": "Founder & CEO"}}], [{"index": 19, "rowId": "source_row_19", "score": 1.0, "displayValues": {"Full Name": "Dr. Joerg Storm", "Job Title": "Investor & Advisory Board Member", "Company": "Zapdeck"}, "fieldValues": {"Job Title": "Investor & Advisory Board Member"}}, {"index": 1, "rowId": "source_row_1", "score": 0.940016, "displayValues": {"Full Name": "Kevin O'Leary", "Job Title": "Investor, Strategic Advisor", "Company": "Tax Hive"}, "fieldValues": {"Job Title": "Investor, Strategic Advisor"}}, {"index": 3, "rowId": "source_row_3", "score": 0.854615, "displayValues": {"Full Name": "Steven Bartlett", "Job Title": "Investor", "Company": "Stan"}, "fieldValues": {"Job Title": "Investor"}}], [{"index": 29, "rowId": "source_row_29", "score": 1.0, "displayValues": {"Full Name": "Henry Blodget", "Job Title": "Chair and Co-Founder", "Company": "Spooler Media"}, "fieldValues": {"Job Title": "Chair and Co-Founder"}}, {"index": 2, "rowId": "source_row_2", "score": 0.827342, "displayValues": {"Full Name": "Ryan Reynolds", "Job Title": "Co-Founder", "Company": "Group Effort Initiative"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 26, "rowId": "source_row_26", "score": 0.827342, "displayValues": {"Full Name": "Reno Perry", "Job Title": "Co-Founder", "Company": "Wiseful"}, "fieldValues": {"Job Title": "Co-Founder"}}], [{"index": 7, "rowId": "source_row_7", "score": 1.0, "displayValues": {"Full Name": "Andrew Huberman", "Job Title": "Scientific Advisor", "Company": "Function Health"}, "fieldValues": {"Job Title": "Scientific Advisor"}}, {"index": 24, "rowId": "source_row_24", "score": 0.940016, "displayValues": {"Full Name": "Cory Warfield", "Job Title": "Strategic Advisor", "Company": "Lattitude"}, "fieldValues": {"Job Title": "Strategic Advisor"}}, {"index": 21, "rowId": "source_row_21", "score": 0.882481, "displayValues": {"Full Name": "Stephen Curry", "Job Title": "Special Advisor", "Company": "Penny Jar Capital"}, "fieldValues": {"Job Title": "Special Advisor"}}]]}, "7": {"labels": ["Founders and CEOs — Co-Founder / Founder profiles", "Founders and CEOs — Co-Founder / Founder profiles 2", "Advisors and board members — Mentora / Mentora de Carreiras, Networking e LinkedIn profiles", "Functional executives and partners with strong overlap among advisors and board members", "Investors and venture partners", "Founders and CEOs — Co-Founder / Founder profiles 3", "Advisors and board members — Vice President / CEO profiles"], "descriptions": ["Representative roles include Co-Founder, Founder, and Co-Founder, Board Member.", "Representative roles include Co-Founder, Founder, and Founder & CEO.", "Representative roles include Mentora, Mentora de Carreiras, Networking e LinkedIn, and Advisor to the CEO.", "Representative roles include Talent Acquisition, Consultora de Recursos Humanos, and Chief Human Resources Officer.", "Representative roles include Investor, Angel Investor, and Founder.", "Representative roles include Co-Founder, Founder, and Managing Partner.", "Representative roles include Vice President, CEO, and Advisor to the CEO."], "evidence": [{"Job Title": "Co-Founder, Founder, and Co-Founder, Board Member"}, {"Job Title": "Co-Founder, Founder, and Founder & CEO"}, {"Job Title": "Mentora, Mentora de Carreiras, Networking e LinkedIn, and Advisor to the CEO"}, {"Job Title": "Talent Acquisition, Consultora de Recursos Humanos, and Chief Human Resources Officer"}, {"Job Title": "Investor, Angel Investor, and Founder"}, {"Job Title": "Co-Founder, Founder, and Managing Partner"}, {"Job Title": "Vice President, CEO, and Advisor to the CEO"}], "personaGrounding": [{"candidateId": "K7-C0", "descriptionEvidence": [{"evidenceId": "ev_ace157385b3698a4", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_d3f5d5a90e60a993", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_374772061d24f647", "rowId": "source_row_5", "field": "Job Title", "value": "Co-Founder, Board Member"}, {"evidenceId": "ev_093ce2618f69074a", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Founder, and Co-Founder, Board Member", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_ace157385b3698a4", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_d3f5d5a90e60a993", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_374772061d24f647", "rowId": "source_row_5", "field": "Job Title", "value": "Co-Founder, Board Member"}, {"evidenceId": "ev_093ce2618f69074a", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}]}], "sourceEvidence": [{"evidenceId": "ev_ace157385b3698a4", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}, {"evidenceId": "ev_d3f5d5a90e60a993", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}, {"evidenceId": "ev_374772061d24f647", "rowId": "source_row_5", "field": "Job Title", "value": "Co-Founder, Board Member"}, {"evidenceId": "ev_093ce2618f69074a", "rowId": "source_row_9", "field": "Job Title", "value": "Co-Founder & Chairman"}]}, {"candidateId": "K7-C1", "descriptionEvidence": [{"evidenceId": "ev_fb1b111c6fb96d69", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_56fdb1df7efa1fcf", "rowId": "source_row_35", "field": "Job Title", "value": "CEO and Founder"}, {"evidenceId": "ev_f2a651cc18d92bb3", "rowId": "source_row_36", "field": "Job Title", "value": "CEO & Co-founder"}, {"evidenceId": "ev_5f5ede0e2386355b", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Founder, and Founder & CEO", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_fb1b111c6fb96d69", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_56fdb1df7efa1fcf", "rowId": "source_row_35", "field": "Job Title", "value": "CEO and Founder"}, {"evidenceId": "ev_f2a651cc18d92bb3", "rowId": "source_row_36", "field": "Job Title", "value": "CEO & Co-founder"}, {"evidenceId": "ev_5f5ede0e2386355b", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}]}], "sourceEvidence": [{"evidenceId": "ev_fb1b111c6fb96d69", "rowId": "source_row_42", "field": "Job Title", "value": "Founder & CEO"}, {"evidenceId": "ev_56fdb1df7efa1fcf", "rowId": "source_row_35", "field": "Job Title", "value": "CEO and Founder"}, {"evidenceId": "ev_f2a651cc18d92bb3", "rowId": "source_row_36", "field": "Job Title", "value": "CEO & Co-founder"}, {"evidenceId": "ev_5f5ede0e2386355b", "rowId": "source_row_28", "field": "Job Title", "value": "Founder"}]}, {"candidateId": "K7-C2", "descriptionEvidence": [{"evidenceId": "ev_57706320942f72fc", "rowId": "source_row_48", "field": "Job Title", "value": "Mentora"}, {"evidenceId": "ev_fe2806114dce0158", "rowId": "source_row_37", "field": "Job Title", "value": "Mentora de Carreiras, Networking e LinkedIn"}, {"evidenceId": "ev_c2799930715803a0", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_54a44d78e077a4eb", "rowId": "source_row_8", "field": "Job Title", "value": "Advisor - founding member"}], "fieldSummaries": [{"field": "Job Title", "summary": "Mentora, Mentora de Carreiras, Networking e LinkedIn, and Advisor to the CEO", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_57706320942f72fc", "rowId": "source_row_48", "field": "Job Title", "value": "Mentora"}, {"evidenceId": "ev_fe2806114dce0158", "rowId": "source_row_37", "field": "Job Title", "value": "Mentora de Carreiras, Networking e LinkedIn"}, {"evidenceId": "ev_c2799930715803a0", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_54a44d78e077a4eb", "rowId": "source_row_8", "field": "Job Title", "value": "Advisor - founding member"}]}], "sourceEvidence": [{"evidenceId": "ev_57706320942f72fc", "rowId": "source_row_48", "field": "Job Title", "value": "Mentora"}, {"evidenceId": "ev_fe2806114dce0158", "rowId": "source_row_37", "field": "Job Title", "value": "Mentora de Carreiras, Networking e LinkedIn"}, {"evidenceId": "ev_c2799930715803a0", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_54a44d78e077a4eb", "rowId": "source_row_8", "field": "Job Title", "value": "Advisor - founding member"}]}, {"candidateId": "K7-C3", "descriptionEvidence": [{"evidenceId": "ev_3d42ce39a4da5dbf", "rowId": "source_row_44", "field": "Job Title", "value": "Talent Acquisition"}, {"evidenceId": "ev_58ff681e734f2891", "rowId": "source_row_32", "field": "Job Title", "value": "Consultora de Recursos Humanos"}, {"evidenceId": "ev_2fc4934b2e2f3617", "rowId": "source_row_11", "field": "Job Title", "value": "Chief Human Resources Officer"}, {"evidenceId": "ev_2b3666635863b3d4", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}], "fieldSummaries": [{"field": "Job Title", "summary": "Talent Acquisition, Consultora de Recursos Humanos, and Chief Human Resources Officer", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_3d42ce39a4da5dbf", "rowId": "source_row_44", "field": "Job Title", "value": "Talent Acquisition"}, {"evidenceId": "ev_58ff681e734f2891", "rowId": "source_row_32", "field": "Job Title", "value": "Consultora de Recursos Humanos"}, {"evidenceId": "ev_2fc4934b2e2f3617", "rowId": "source_row_11", "field": "Job Title", "value": "Chief Human Resources Officer"}, {"evidenceId": "ev_2b3666635863b3d4", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}]}], "sourceEvidence": [{"evidenceId": "ev_3d42ce39a4da5dbf", "rowId": "source_row_44", "field": "Job Title", "value": "Talent Acquisition"}, {"evidenceId": "ev_58ff681e734f2891", "rowId": "source_row_32", "field": "Job Title", "value": "Consultora de Recursos Humanos"}, {"evidenceId": "ev_2fc4934b2e2f3617", "rowId": "source_row_11", "field": "Job Title", "value": "Chief Human Resources Officer"}, {"evidenceId": "ev_2b3666635863b3d4", "rowId": "source_row_24", "field": "Job Title", "value": "Strategic Advisor"}]}, {"candidateId": "K7-C4", "descriptionEvidence": [{"evidenceId": "ev_18dd4bc3795d6e35", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_45378e4c8a056b68", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_984b61928484d793", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}, {"evidenceId": "ev_04bf14337a8a3282", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}], "fieldSummaries": [{"field": "Job Title", "summary": "Investor, Angel Investor, and Founder", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_18dd4bc3795d6e35", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_45378e4c8a056b68", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_984b61928484d793", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}, {"evidenceId": "ev_04bf14337a8a3282", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}]}], "sourceEvidence": [{"evidenceId": "ev_18dd4bc3795d6e35", "rowId": "source_row_3", "field": "Job Title", "value": "Investor"}, {"evidenceId": "ev_45378e4c8a056b68", "rowId": "source_row_1", "field": "Job Title", "value": "Investor, Strategic Advisor"}, {"evidenceId": "ev_984b61928484d793", "rowId": "source_row_22", "field": "Job Title", "value": "Angel Investor"}, {"evidenceId": "ev_04bf14337a8a3282", "rowId": "source_row_19", "field": "Job Title", "value": "Investor & Advisory Board Member"}]}, {"candidateId": "K7-C5", "descriptionEvidence": [{"evidenceId": "ev_5bc42e0d64c65d58", "rowId": "source_row_12", "field": "Job Title", "value": "Managing Partner"}, {"evidenceId": "ev_e6d3d3669b1c47b4", "rowId": "source_row_20", "field": "Job Title", "value": "Partner"}, {"evidenceId": "ev_28ebca8a8551c7ca", "rowId": "source_row_16", "field": "Job Title", "value": "Founding Partner"}, {"evidenceId": "ev_87bc5c450ede80a5", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}], "fieldSummaries": [{"field": "Job Title", "summary": "Co-Founder, Founder, and Managing Partner", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_5bc42e0d64c65d58", "rowId": "source_row_12", "field": "Job Title", "value": "Managing Partner"}, {"evidenceId": "ev_e6d3d3669b1c47b4", "rowId": "source_row_20", "field": "Job Title", "value": "Partner"}, {"evidenceId": "ev_28ebca8a8551c7ca", "rowId": "source_row_16", "field": "Job Title", "value": "Founding Partner"}, {"evidenceId": "ev_87bc5c450ede80a5", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}]}], "sourceEvidence": [{"evidenceId": "ev_5bc42e0d64c65d58", "rowId": "source_row_12", "field": "Job Title", "value": "Managing Partner"}, {"evidenceId": "ev_e6d3d3669b1c47b4", "rowId": "source_row_20", "field": "Job Title", "value": "Partner"}, {"evidenceId": "ev_28ebca8a8551c7ca", "rowId": "source_row_16", "field": "Job Title", "value": "Founding Partner"}, {"evidenceId": "ev_87bc5c450ede80a5", "rowId": "source_row_2", "field": "Job Title", "value": "Co-Founder"}]}, {"candidateId": "K7-C6", "descriptionEvidence": [{"evidenceId": "ev_a240b9ab952b584f", "rowId": "source_row_23", "field": "Job Title", "value": "Vice President"}, {"evidenceId": "ev_ade27ea4dd586643", "rowId": "source_row_0", "field": "Job Title", "value": "CEO"}, {"evidenceId": "ev_e3aeb21d6a6fc5d1", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_6d9b47df3086a497", "rowId": "source_row_6", "field": "Job Title", "value": "Board Member"}], "fieldSummaries": [{"field": "Job Title", "summary": "Vice President, CEO, and Advisor to the CEO", "evidenceStatus": "supported", "evidence": [{"evidenceId": "ev_a240b9ab952b584f", "rowId": "source_row_23", "field": "Job Title", "value": "Vice President"}, {"evidenceId": "ev_ade27ea4dd586643", "rowId": "source_row_0", "field": "Job Title", "value": "CEO"}, {"evidenceId": "ev_e3aeb21d6a6fc5d1", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_6d9b47df3086a497", "rowId": "source_row_6", "field": "Job Title", "value": "Board Member"}]}], "sourceEvidence": [{"evidenceId": "ev_a240b9ab952b584f", "rowId": "source_row_23", "field": "Job Title", "value": "Vice President"}, {"evidenceId": "ev_ade27ea4dd586643", "rowId": "source_row_0", "field": "Job Title", "value": "CEO"}, {"evidenceId": "ev_e3aeb21d6a6fc5d1", "rowId": "source_row_13", "field": "Job Title", "value": "Advisor to the CEO"}, {"evidenceId": "ev_6d9b47df3086a497", "rowId": "source_row_6", "field": "Job Title", "value": "Board Member"}]}], "memberships": [[0.207303, 0.724052, 0.078717, 0.629738, 0.103418, 0.430543, 0.940016], [0.04176, 0.078717, 0.543991, 0.724052, 0.882481, 0.229496, 0.629738], [0.882481, 0.585819, 0.167303, 0.334078, 0.364431, 0.724052, 0.207303], [0.031652, 0.025913, 0.031652, 0.196764, 0.969699, 0.073227, 0.084475], [0.0, 0.0, 0.724052, 0.006196, 0.004352, 6.8e-05, 0.000544], [0.629738, 0.364431, 0.014688, 0.058301, 0.090507, 0.396569, 0.13281], [0.117502, 0.117502, 0.229496, 0.504203, 0.117502, 0.186589, 0.827342], [0.004352, 0.006196, 0.364431, 0.0085, 0.006196, 0.0085, 0.049571], [0.229496, 0.186589, 0.827342, 0.011313, 0.278523, 0.305459, 0.334078], [0.585819, 0.466404, 0.004352, 0.023324, 0.078717, 0.466404, 0.364431], [0.278523, 0.334078, 0.001062, 0.000544, 0.023324, 0.034815, 0.0085], [0.014688, 0.067999, 0.002915, 0.882481, 0.000544, 0.014688, 0.149394], [0.186589, 0.167303, 0.278523, 0.466404, 0.149394, 1.0, 0.504203], [0.149394, 0.207303, 0.882481, 0.585819, 0.543991, 0.364431, 0.882481], [0.13281, 0.034815, 0.0, 0.0, 0.001062, 0.000229, 8e-06], [0.380274, 0.265671, 0.448235, 0.045554, 0.176771, 0.125, 0.038182], [0.334078, 0.305459, 0.04176, 0.090507, 0.207303, 0.882481, 0.058301], [0.000544, 6.8e-05, 8e-06, 8e-06, 0.0, 0.0, 0.0], [0.023324, 0.011313, 0.0085, 0.430543, 0.504203, 0.011313, 0.028687], [0.103418, 0.103418, 0.090507, 0.13281, 0.724052, 0.103418, 0.543991], [0.167303, 0.090507, 0.675798, 0.77455, 0.466404, 0.940016, 0.396569], [0.001062, 0.001836, 0.585819, 0.103418, 0.018674, 0.028687, 0.103418], [0.084475, 0.053818, 0.063025, 0.016601, 0.800656, 0.045554, 0.016601], [0.067999, 0.13281, 0.049571, 0.675798, 0.253219, 0.207303, 1.0], [0.011313, 0.018674, 0.77455, 0.827342, 0.13281, 0.167303, 0.724052], [0.002915, 0.0085, 6.8e-05, 0.001062, 8e-06, 0.000544, 0.011313], [0.882481, 0.585819, 0.167303, 0.334078, 0.364431, 0.724052, 0.207303], [0.001836, 0.001062, 0.253219, 0.028687, 0.0085, 0.002915, 0.023324], [0.699648, 0.800656, 0.319555, 0.241163, 0.607514, 0.564647, 0.448235], [0.504203, 0.430543, 0.117502, 0.067999, 0.049571, 0.253219, 0.117502], [0.699648, 0.800656, 0.319555, 0.241163, 0.607514, 0.564647, 0.448235], [0.058301, 0.014688, 0.001836, 0.001836, 0.675798, 0.006196, 0.001836], [0.000229, 0.000229, 0.629738, 0.940016, 0.000229, 0.001836, 0.001062], [0.882481, 0.585819, 0.167303, 0.334078, 0.364431, 0.724052, 0.207303], [0.882481, 0.585819, 0.167303, 0.334078, 0.364431, 0.724052, 0.207303], [0.430543, 0.940016, 0.011313, 0.034815, 0.04176, 0.278523, 0.305459], [0.466404, 0.882481, 0.023324, 0.117502, 0.058301, 0.334078, 0.278523], [6.8e-05, 0.000544, 0.940016, 0.004352, 6.8e-05, 0.001062, 0.000229], [0.882481, 0.585819, 0.167303, 0.334078, 0.364431, 0.724052, 0.207303], [0.380274, 0.265671, 0.448235, 0.045554, 0.176771, 0.125, 0.038182], [0.305459, 0.396569, 0.000544, 0.002915, 0.034815, 0.149394, 0.067999], [0.253219, 0.229496, 0.000229, 6.8e-05, 0.001836, 0.018674, 0.002915], [0.543991, 1.0, 0.103418, 0.543991, 0.229496, 0.504203, 0.585819], [0.018674, 0.04176, 0.504203, 0.167303, 0.067999, 0.090507, 0.77455], [0.006196, 0.002915, 0.006196, 1.0, 0.011313, 0.004352, 0.006196], [0.031652, 0.025913, 0.031652, 0.196764, 0.969699, 0.073227, 0.084475], [0.049571, 0.149394, 0.018674, 0.078717, 0.028687, 0.058301, 0.675798], [8e-06, 8e-06, 0.396569, 0.000229, 0.002915, 8e-06, 6.8e-05], [0.0085, 0.004352, 1.0, 0.149394, 0.014688, 0.023324, 0.004352], [0.084475, 0.053818, 0.063025, 0.016601, 0.800656, 0.045554, 0.016601]], "representativeAccounts": [[{"index": 2, "rowId": "source_row_2", "score": 0.882481, "displayValues": {"Full Name": "Ryan Reynolds", "Job Title": "Co-Founder", "Company": "Group Effort Initiative"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 26, "rowId": "source_row_26", "score": 0.882481, "displayValues": {"Full Name": "Reno Perry", "Job Title": "Co-Founder", "Company": "Wiseful"}, "fieldValues": {"Job Title": "Co-Founder"}}, {"index": 33, "rowId": "source_row_33", "score": 0.882481, "displayValues": {"Full Name": "Alex Rodriguez", "Job Title": "Co-Founder", "Company": "Mojo"}, "fieldValues": {"Job Title": "Co-Founder"}}], [{"index": 42, "rowId": "source_row_42", "score": 1.0, "displayValues": {"Full Name": "Oana Labes, MBA, CPA", "Job Title": "Founder & CEO", "Company": "Financiario"}, "fieldValues": {"Job Title": "Founder & CEO"}}, {"index": 35, "rowId": "source_row_35", "score": 0.940016, "displayValues": {"Full Name": "Dennis R. Mortensen", "Job Title": "CEO and Founder", "Company": "LaunchBrightly"}, "fieldValues": {"Job Title": "CEO and Founder"}}, {"index": 36, "rowId": "source_row_36", "score": 0.882481, "displayValues": {"Full Name": "Atif Rafiq", "Job Title": "CEO & Co-founder", "Company": "Ritual"}, "fieldValues": {"Job Title": "CEO & Co-founder"}}], [{"index": 48, "rowId": "source_row_48", "score": 1.0, "displayValues": {"Full Name": "Samara Souza", "Job Title": "Mentora", "Company": "eMentor"}, "fieldValues": {"Job Title": "Mentora"}}, {"index": 37, "rowId": "source_row_37", "score": 0.940016, "displayValues": {"Full Name": "Andréa Greco", "Job Title": "Mentora de Carreiras, Networking e LinkedIn", "Company": "eMentor.br"}, "fieldValues": {"Job Title": "Mentora de Carreiras, Networking e LinkedIn"}}, {"index": 13, "rowId": "source_row_13", "score": 0.882481, "displayValues": {"Full Name": "Sanyin Siang", "Job Title": "Advisor to the CEO", "Company": "Privateer Space"}, "fieldValues": {"Job Title": "Advisor to the CEO"}}], [{"index": 44, "rowId": "source_row_44", "score": 1.0, "displayValues": {"Full Name": "Wagner Sousa", "Job Title": "Talent Acquisition", "Company": "headhunters.io"}, "fieldValues": {"Job Title": "Talent Acquisition"}}, {"index": 32, "rowId": "source_row_32", "score": 0.940016, "displayValues": {"Full Name": "Michelle Zampiere", "Job Title": "Consultora de Recursos Humanos", "Company": "Ully Oficial"}, "fieldValues": {"Job Title": "Consultora de Recursos Humanos"}}, {"index": 11, "rowId": "source_row_11", "score": 0.882481, "displayValues": {"Full Name": "Tejaswee Tripathy", "Job Title": "Chief Human Resources Officer", "Company": "FinocontrolTM"}, "fieldValues": {"Job Title": "Chief Human Resources Officer"}}], [{"index": 3, "rowId": "source_row_3", "score": 0.969699, "displayValues": {"Full Name": "Steven Bartlett", "Job Title": "Investor", "Company": "Stan"}, "fieldValues": {"Job Title": "Investor"}}, {"index": 45, "rowId": "source_row_45", "score": 0.969699, "displayValues": {"Full Name": "Ryan Serhant", "Job Title": "Investor", "Company": "RLTY Capital"}, "fieldValues": {"Job Title": "Investor"}}, {"index": 1, "rowId": "source_row_1", "score": 0.882481, "displayValues": {"Full Name": "Kevin O'Leary", "Job Title": "Investor, Strategic Advisor", "Company": "Tax Hive"}, "fieldValues": {"Job Title": "Investor, Strategic Advisor"}}], [{"index": 12, "rowId": "source_row_12", "score": 1.0, "displayValues": {"Full Name": "Alex Hormozi", "Job Title": "Managing Partner", "Company": "Acquisition.com"}, "fieldValues": {"Job Title": "Managing Partner"}}, {"index": 20, "rowId": "source_row_20", "score": 0.940016, "displayValues": {"Full Name": "Gustavo Caetano", "Job Title": "Partner", "Company": "Mergus Ventures"}, "fieldValues": {"Job Title": "Partner"}}, {"index": 16, "rowId": "source_row_16", "score": 0.882481, "displayValues": {"Full Name": "Dr Ola Brown", "Job Title": "Founding Partner", "Company": "HealthCap Africa"}, "fieldValues": {"Job Title": "Founding Partner"}}], [{"index": 23, "rowId": "source_row_23", "score": 1.0, "displayValues": {"Full Name": "Dave Kerpen", "Job Title": "Vice President", "Company": "Grateful"}, "fieldValues": {"Job Title": "Vice President"}}, {"index": 0, "rowId": "source_row_0", "score": 0.940016, "displayValues": {"Full Name": "Gary Vaynerchuk", "Job Title": "CEO", "Company": "Vayner3"}, "fieldValues": {"Job Title": "CEO"}}, {"index": 13, "rowId": "source_row_13", "score": 0.882481, "displayValues": {"Full Name": "Sanyin Siang", "Job Title": "Advisor to the CEO", "Company": "Privateer Space"}, "fieldValues": {"Job Title": "Advisor to the CEO"}}]]}}, "defaultK": 3, "minimumK": 3, "maximumK": 7, "defaultThreshold": 0.4, "embeddingBackend": "openai", "embeddingMetadata": {"model": "text-embedding-3-small", "dimensions": 1536, "combination": "Equal-weight mean of nonblank selected-field embeddings, then L2 normalization", "cache_hits": 42, "api_inputs": 0, "api_requests": 0, "fields": {"Job Title": {"model": "text-embedding-3-small", "dimensions": 1536, "cache_hits": 42, "api_inputs": 0, "api_requests": 0, "blank_inputs": 0}}}, "semanticField": "Job Title", "clusterableFields": ["Job Title", "Company", "City", "State or Province", "Country", "Headline", "Summary", "Summarize LinkedIn profile"], "defaultSelectedFields": ["Job Title"], "displayFields": ["Full Name", "Job Title", "Company"]};
+    const colors = ['var(--c0)','var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)'];
+    const clusterCountInput = document.getElementById('clusterCount');
+    const clusterCountValue = document.getElementById('clusterCountValue');
+    const thresholdInput = document.getElementById('threshold');
+    const thresholdValue = document.getElementById('thresholdValue');
+    const tooltip = document.getElementById('tooltip');
+    const painPointButton = document.getElementById('painPointButton');
+    const painPointResult = document.getElementById('painPointResult');
+    const painPointJson = document.getElementById('painPointJson');
+    const newsStatus = document.getElementById('newsStatus');
+    const articleResults = document.getElementById('articleResults');
+    const articleCount = document.getElementById('articleCount');
+    const painAnalysis = document.getElementById('painAnalysis');
+    const fieldToggleList = document.getElementById('fieldToggleList');
+    const fieldStatus = document.getElementById('fieldStatus');
+    const csvUpload = document.getElementById('csvUpload');
+    const demoButton = document.getElementById('demoButton');
+    const datasetStatus = document.getElementById('datasetStatus');
+    const traceGrid = document.getElementById('traceGrid');
+    let isSearching = false;
+    let isClustering = false;
+    let activeDatasetId = DATA.datasetId;
+    let activeDatasetName = DATA.datasetName;
+    let activeClusterableFields = [...DATA.clusterableFields];
+    let activeDisplayFields = [...DATA.displayFields];
+    let activeRecords = DATA.records.map(record => ({ ...record }));
+    let activeModels = DATA.models;
+    let activeFields = [...DATA.defaultSelectedFields];
+    let activeEmbeddingMetadata = DATA.embeddingMetadata || {};
+    let clusteringRequestController = null;
+    let reclusterTimer = null;
+    const selectedPersonas = {};
+    const clusteringCache = new Map();
+    const traceState = {
+      parse: { status: 'completed', detail: 'Bundled demo loaded locally.' },
+      cluster: { status: 'completed', detail: 'Precomputed demo embeddings and fuzzy memberships.' },
+      personas: { status: 'completed', detail: 'Pre-generated demo descriptions; no call on page load.' },
+      query: { status: 'idle', detail: 'Runs after persona selection.' },
+      news: { status: 'idle', detail: 'Runs after query generation.' },
+      pains: { status: 'idle', detail: 'Runs after article deduplication.' }
+    };
+    function clusteringCacheKey(fields) { return `${activeDatasetId}::${fields.join('')}`; }
+    clusteringCache.set(clusteringCacheKey(activeFields), {
+      models: DATA.models,
+      records: activeRecords,
+      embeddingBackend: DATA.embeddingBackend,
+      embeddingMetadata: DATA.embeddingMetadata || {},
+      minimumK: DATA.minimumK,
+      maximumK: DATA.maximumK,
+      defaultK: DATA.defaultK,
+      modelTrace: []
+    });
+
+    function renderTrace() {
+      const steps = [
+        ['parse', 'Parse CSV + infer fields', 'local', 'Schema, usable text columns, and display columns.'],
+        ['cluster', 'Embed selected fields + fuzzy cluster', 'model + local', 'Selected CSV cells become cached OpenAI vectors; selected-field vectors are combined locally before fuzzy clustering.'],
+        ['personas', 'Generate persona descriptions', 'model', 'Representative values from every selected column → names, descriptions, field summaries.'],
+        ['query', 'Generate NewsAPI query', 'model', 'Only visible selected-persona text → query JSON under 500 characters.'],
+        ['news', 'Retrieve + deduplicate news', 'API + model', 'NewsAPI results → cached title-and-description embeddings → up to 25 event candidates.'],
+        ['pains', 'Analyze market pain-points', 'model', 'Persona text plus article titles/descriptions → evidence-backed hypotheses.']
+      ];
+      traceGrid.innerHTML = steps.map(([id, label, kind, description]) => {
+        const state = traceState[id];
+        return `<article class="trace-step"><div class="trace-step-top"><strong>${escapeHtml(label)}</strong><span class="trace-badge ${kind.includes('model') ? 'model' : ''}">${escapeHtml(kind)}</span></div><p>${escapeHtml(description)}</p><span class="trace-status ${escapeHtml(state.status)}">${escapeHtml(state.status)} · ${escapeHtml(state.detail)}</span></article>`;
+      }).join('');
+    }
+    function setTrace(id, status, detail) {
+      traceState[id] = { status, detail };
+      renderTrace();
+    }
+
+    function selectionKey() { return `${activeDatasetId}::${activeFields.join('')}::${clusterCountInput.value}`; }
+    function currentModel() { return activeModels[String(clusterCountInput.value)]; }
+    function currentSelection() {
+      const key = selectionKey();
+      const model = currentModel();
+      if (!selectedPersonas[key] || selectedPersonas[key].length !== model.labels.length) {
+        selectedPersonas[key] = model.labels.map(() => true);
+      }
+      return selectedPersonas[key];
+    }
+    function scoresFor(record) { return currentModel().memberships[record.index]; }
+    function membershipsAt(record, threshold) {
+      return scoresFor(record).map((score, cluster) => ({ score, cluster })).filter(item => item.score >= threshold);
+    }
+
+    function renderStats(threshold) {
+      const counts = [0,0,0,0];
+      activeRecords.forEach(record => {
+        const count = membershipsAt(record, threshold).length;
+        counts[count === 0 ? 0 : count === 1 ? 1 : count === 2 ? 2 : 3]++;
+      });
+      document.getElementById('zeroCount').textContent = counts[0];
+      document.getElementById('oneCount').textContent = counts[1];
+      document.getElementById('twoCount').textContent = counts[2];
+      document.getElementById('threeCount').textContent = counts[3];
+    }
+
+    function renderClusters(threshold) {
+      const model = currentModel();
+      const selected = currentSelection();
+      const counts = model.labels.map((_, cluster) => activeRecords.filter(record => scoresFor(record)[cluster] >= threshold).length);
+      document.getElementById('clusterList').innerHTML = model.labels.map((label, cluster) => {
+        const evidence = model.evidence && model.evidence[cluster] ? model.evidence[cluster] : {};
+        const description = model.descriptions && model.descriptions[cluster] ? model.descriptions[cluster] : '';
+        const grounding = model.personaGrounding && model.personaGrounding[cluster] ? model.personaGrounding[cluster] : null;
+        const examples = model.representativeAccounts && Array.isArray(model.representativeAccounts[cluster])
+          ? model.representativeAccounts[cluster]
+          : [];
+        const evidenceMarkup = activeFields.map(field => `<span><b>${escapeHtml(field)}:</b> ${escapeHtml(evidence[field] || 'No representative values')}</span>`).join(' · ');
+        const sourceItem = item => `<div class="source-evidence-item"><div class="source-evidence-meta">${escapeHtml(item.rowId)} · ${escapeHtml(item.field)} · ${escapeHtml(item.evidenceId)}</div><div class="source-evidence-value">${escapeHtml(item.value)}</div></div>`;
+        const groundingMarkup = grounding ? `
+          <details class="persona-grounding">
+            <summary>Inspect persona evidence (${Array.isArray(grounding.sourceEvidence) ? grounding.sourceEvidence.length : 0} source values)</summary>
+            <div class="grounding-body">
+              <section class="grounding-layer">
+                <div class="grounding-layer-label">Generated interpretation</div>
+                <p>The persona prose below is model-generated or deterministic interpretation. Each populated field is linked to server-verified CSV evidence.</p>
+                <div class="grounding-field"><strong>Description support</strong><div class="source-evidence-list">${(grounding.descriptionEvidence || []).map(sourceItem).join('')}</div>${!(grounding.descriptionEvidence || []).length ? '<div class="no-source-evidence">No source evidence was available for the description.</div>' : ''}</div>
+                ${(grounding.fieldSummaries || []).map(summary => `<div class="grounding-field"><strong>${escapeHtml(summary.field)}</strong><p>${escapeHtml(summary.summary)}</p><div class="source-evidence-list">${(summary.evidence || []).map(sourceItem).join('')}</div>${summary.evidenceStatus === 'no_evidence' ? '<div class="no-source-evidence">No populated representative value was supplied for this field.</div>' : ''}</div>`).join('')}
+              </section>
+              <section class="grounding-layer">
+                <div class="grounding-layer-label">Exact CSV source evidence</div>
+                <p>Values are copied and bounded by the server, not written by the model. Row IDs remain stable for this dataset.</p>
+                <div class="source-evidence-list">${(grounding.sourceEvidence || []).map(sourceItem).join('')}</div>
+              </section>
+            </div>
+          </details>` : '';
+        const examplesMarkup = examples.length ? `
+          <details class="representative-records">
+            <summary>Highest-affinity examples (${examples.length})</summary>
+            <div class="representative-list">${examples.map(example => {
+              const displayEntries = Object.entries(example.displayValues || {});
+              const fieldEntries = Object.entries(example.fieldValues || {});
+              const identity = (displayEntries.find(([, value]) => value && value !== 'Not provided') || [null, example.rowId])[1];
+              return `<article class="representative-card">
+                <div class="representative-card-head"><strong>${escapeHtml(identity)}</strong><span class="affinity-score">Affinity ${Number(example.score).toFixed(3)}</span></div>
+                <div class="representative-row-id">${escapeHtml(example.rowId)}</div>
+                <div class="representative-section-label">Display identity</div>
+                <div class="representative-fields">${displayEntries.map(([field, value]) => `<span><b>${escapeHtml(field)}:</b> ${escapeHtml(value)}</span>`).join('')}</div>
+                <div class="representative-section-label">Selected clustering fields</div>
+                <div class="representative-fields">${fieldEntries.map(([field, value]) => `<span><b>${escapeHtml(field)}:</b> ${escapeHtml(value)}</span>`).join('')}</div>
+              </article>`;
+            }).join('')}</div>
+          </details>` : '';
+        return `
+        <div class="cluster-row ${selected[cluster] ? '' : 'is-unselected'}">
+          <span class="swatch" style="background:${colors[cluster]}"></span>
+          <span class="cluster-name"><strong>C${cluster} · ${escapeHtml(label)}</strong><small class="cluster-description">${escapeHtml(description)}</small><small class="cluster-evidence"><b>Generated field interpretation:</b> ${evidenceMarkup}</small>${groundingMarkup}${examplesMarkup}</span>
+          <span class="cluster-count">${counts[cluster]}</span>
+          <input class="persona-select" type="checkbox" data-cluster="${cluster}" ${selected[cluster] ? 'checked' : ''} aria-label="Select ${escapeHtml(label)} for market pain-point search">
+        </div>`;
+      }).join('');
+      document.querySelectorAll('.persona-select').forEach(input => {
+        input.addEventListener('change', () => {
+          const cluster = Number(input.dataset.cluster);
+          currentSelection()[cluster] = input.checked;
+          input.closest('.cluster-row').classList.toggle('is-unselected', !input.checked);
+          invalidatePainPointRequest();
+          updatePainPointButton();
+        });
+      });
+
+      const pairs = [];
+      for (let a = 0; a < model.labels.length; a++) {
+        for (let b = a + 1; b < model.labels.length; b++) {
+          const shared = activeRecords.filter(record => scoresFor(record)[a] >= threshold && scoresFor(record)[b] >= threshold).length;
+          if (shared) pairs.push({ a, b, shared });
+        }
+      }
+      pairs.sort((x, y) => y.shared - x.shared);
+      document.getElementById('overlapList').innerHTML = pairs.length
+        ? pairs.slice(0, 6).map(pair => `<div class="overlap-row"><span>C${pair.a} + C${pair.b}</span><strong>${pair.shared} shared</strong></div>`).join('')
+        : '<div class="muted">No intersections at this cutoff.</div>';
+    }
+
+    function renderTable(threshold) {
+      const rows = activeRecords.map(record => {
+        const active = membershipsAt(record, threshold).sort((a,b) => b.score - a.score);
+        return { ...record, active, max: Math.max(...scoresFor(record)) };
+      }).sort((a,b) => b.active.length - a.active.length || b.max - a.max);
+      document.getElementById('prospectRows').innerHTML = rows.map(record => `
+        <tr>
+          <td><strong>${escapeHtml(record.name)}</strong><br><span class="muted">${record.rowId}</span></td>
+          <td>${escapeHtml(record.title)}</td>
+          <td>${escapeHtml(record.company)}</td>
+          <td><div class="score-list">${record.active.length ? record.active.map(item => `<span class="score"><i style="background:${colors[item.cluster]}"></i>C${item.cluster} ${item.score.toFixed(2)}</span>`).join('') : '<span class="muted">No cluster</span>'}</div></td>
+        </tr>`).join('');
+    }
+
+    function renderScatter(threshold) {
+      const svg = document.getElementById('scatter');
+      const rect = svg.getBoundingClientRect();
+      const width = Math.max(320, rect.width || 760);
+      const height = Math.max(360, rect.height || 540);
+      const pad = { left: 54, right: 24, top: 22, bottom: 46 };
+      const xs = activeRecords.map(d => d.x), ys = activeRecords.map(d => d.y);
+      const xMin = Math.min(...xs), xMax = Math.max(...xs), yMin = Math.min(...ys), yMax = Math.max(...ys);
+      const sx = value => pad.left + (value - xMin) / (xMax - xMin || 1) * (width - pad.left - pad.right);
+      const sy = value => pad.top + (yMax - value) / (yMax - yMin || 1) * (height - pad.top - pad.bottom);
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      const frameColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+      const muted = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
+      const surface2 = getComputedStyle(document.documentElement).getPropertyValue('--surface-2').trim();
+      let markup = `<rect x="${pad.left}" y="${pad.top}" width="${width-pad.left-pad.right}" height="${height-pad.top-pad.bottom}" rx="10" fill="${surface2}" stroke="${frameColor}"/>`;
+      markup += `<text x="${width/2}" y="${height-10}" text-anchor="middle" fill="${muted}" font-size="12">PCA component 1</text>`;
+      markup += `<text x="14" y="${height/2}" text-anchor="middle" fill="${muted}" font-size="12" transform="rotate(-90 14 ${height/2})">PCA component 2</text>`;
+      activeRecords.forEach((record, index) => {
+        const active = membershipsAt(record, threshold);
+        const scores = scoresFor(record);
+        const primary = scores.indexOf(Math.max(...scores));
+        const fill = active.length ? colors[primary] : muted;
+        const stroke = active.length >= 2 ? 'var(--text)' : 'var(--surface)';
+        const radius = active.length >= 3 ? 7.5 : 6.5;
+        markup += `<circle data-index="${index}" cx="${sx(record.x)}" cy="${sy(record.y)}" r="${radius}" fill="${fill}" fill-opacity=".82" stroke="${stroke}" stroke-width="${active.length >= 2 ? 2.4 : 1.2}"/>`;
+      });
+      svg.innerHTML = markup;
+      svg.querySelectorAll('circle[data-index]').forEach(circle => {
+        circle.addEventListener('pointerenter', event => showTooltip(event, activeRecords[Number(circle.dataset.index)], threshold));
+        circle.addEventListener('pointermove', moveTooltip);
+        circle.addEventListener('pointerleave', hideTooltip);
+      });
+    }
+
+    function showTooltip(event, record, threshold) {
+      const active = membershipsAt(record, threshold).sort((a,b) => b.score - a.score);
+      tooltip.innerHTML = `<strong>${escapeHtml(record.name)}</strong><br>${escapeHtml(record.title)} · ${escapeHtml(record.company)}<br>${active.length ? active.map(item => `C${item.cluster} ${item.score.toFixed(2)}`).join(' · ') : 'No cluster at this cutoff'}`;
+      tooltip.style.opacity = '1';
+      moveTooltip(event);
+    }
+    function moveTooltip(event) {
+      tooltip.style.left = `${Math.min(window.innerWidth - 360, event.clientX + 14)}px`;
+      tooltip.style.top = `${Math.max(12, event.clientY - 16)}px`;
+    }
+    function hideTooltip() { tooltip.style.opacity = '0'; }
+    function selectedPersonaDescriptions() {
+      const model = currentModel();
+      const selected = currentSelection();
+      return model.labels.flatMap((label, cluster) => {
+        if (!selected[cluster]) return [];
+        const evidence = model.evidence && model.evidence[cluster] ? model.evidence[cluster] : {};
+        const description = model.descriptions && model.descriptions[cluster] ? model.descriptions[cluster] : '';
+        const visibleEvidence = activeFields.map(field => `${field}: ${evidence[field] || 'No representative values'}`);
+        return [`${label}. ${description} ${visibleEvidence.join('. ')}.`.replace(/\s+/g, ' ').trim()];
+      });
+    }
+    function buildPainPointRequest() {
+      const personaDescriptions = selectedPersonaDescriptions();
+      if (!personaDescriptions.length) return;
+      return { persona_descriptions: personaDescriptions };
+    }
+    function invalidatePainPointRequest() {
+      painPointResult.hidden = true;
+      painPointJson.textContent = '';
+      newsStatus.hidden = true;
+      newsStatus.textContent = '';
+      newsStatus.classList.remove('is-error');
+      articleResults.hidden = true;
+      painAnalysis.innerHTML = '';
+      articleCount.textContent = '';
+    }
+    function updatePainPointButton() {
+      const selected = currentSelection();
+      const count = selected.filter(Boolean).length;
+      painPointButton.disabled = count === 0 || isSearching || isClustering;
+      painPointButton.textContent = isSearching ? 'Searching…' : 'Search market pain-points';
+      document.getElementById('painPointNote').textContent = count
+        ? `Uses only the visible text from ${count} selected persona candidate${count === 1 ? '' : 's'} to find up to 25 distinct events from the last 30 days.`
+        : 'Select at least one Persona candidate.';
+    }
+    function citationLinks(ids, articles) {
+      const articleMap = new Map(articles.map((article, index) => [`A${index + 1}`, article]));
+      return `<span class="evidence-citations">${(ids || []).map(id => {
+        const article = articleMap.get(id) || {};
+        const url = safeArticleUrl(article.url);
+        const title = article.title || id;
+        return url === '#'
+          ? `<span>${escapeHtml(id)}</span>`
+          : `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}">${escapeHtml(id)}</a>`;
+      }).join('')}</span>`;
+    }
+    function renderPainAnalysis(payload) {
+      const articles = Array.isArray(payload.articles) ? payload.articles.slice(0, 25) : [];
+      const duplicates = Number(payload.duplicatesRemoved || 0);
+      const analysis = payload.analysis || {};
+      const topProblems = Array.isArray(analysis.top_problems) ? analysis.top_problems : [];
+      const ledger = Array.isArray(analysis.evidence_ledger) ? analysis.evidence_ledger : [];
+      const perArticle = Array.isArray(analysis.article_analysis) ? analysis.article_analysis : [];
+      articleCount.textContent = `${articles.length} distinct event${articles.length === 1 ? '' : 's'} reviewed · ${duplicates} duplicate${duplicates === 1 ? '' : 's'} skipped · ${Number(payload.lookbackDays || 30)}-day window`;
+
+      const problemMarkup = topProblems.length ? topProblems.map(problem => `
+        <article class="problem-card">
+          <div class="problem-title-row">
+            <h4>${escapeHtml(problem.rank)}. ${escapeHtml(problem.problem_name)}</h4>
+            <span class="confidence-badge">${escapeHtml(problem.confidence_label)}</span>
+          </div>
+          <p><strong>Why it may be emerging:</strong> ${escapeHtml(problem.why_emerging)} ${citationLinks(problem.supporting_article_ids, articles)}</p>
+          <p><strong>Persona impact:</strong> ${escapeHtml(problem.persona_impact)} ${citationLinks(problem.supporting_article_ids, articles)}</p>
+          <div class="metric-row">
+            <span class="metric-chip">Weighted support ${Number(problem.weighted_support || 0).toFixed(2)}</span>
+            <span class="metric-chip">${Number(problem.distinct_supporting_events || 0)} distinct events</span>
+            <span class="metric-chip">${Number(problem.supporting_articles || 0)} articles</span>
+            <span class="metric-chip">Avg confidence ${Number(problem.average_confidence || 0).toFixed(2)}</span>
+          </div>
+        </article>`).join('') : '<p class="muted">The supplied articles did not support a strong operational pain hypothesis.</p>';
+
+      const ledgerMarkup = ledger.length ? `
+        <div class="ledger-wrap"><table>
+          <thead><tr><th>Problem</th><th>Supporting articles</th><th>Distinct events</th><th>Avg confidence</th><th>Weighted support</th></tr></thead>
+          <tbody>${ledger.map(row => `<tr>
+            <td>${escapeHtml(row.problem)}</td>
+            <td>${citationLinks(row.supporting_article_ids, articles)}</td>
+            <td>${Number(row.distinct_events || 0)}</td>
+            <td>${Number(row.average_confidence || 0).toFixed(2)}</td>
+            <td>${Number(row.weighted_support || 0).toFixed(2)}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>` : '<p class="muted">No evidence ledger entries.</p>';
+
+      const articleMarkup = perArticle.length ? perArticle.map((item, index) => {
+        const article = articles[index] || {};
+        const id = item.article_id || `A${index + 1}`;
+        const title = article.title || item.title || 'Untitled article';
+        const contributions = Array.isArray(item.problems) ? item.problems : [];
+        const body = item.no_supported_inference || !contributions.length
+          ? '<p>No sufficiently supported operational inference.</p>'
+          : `<ul>${contributions.map(problem => `<li><strong>${escapeHtml(problem.problem)} — ${Number(problem.confidence || 0).toFixed(2)}</strong><br>${escapeHtml(problem.inference)}</li>`).join('')}</ul>`;
+        return `<details class="article-analysis-item">
+          <summary>${citationLinks([id], articles)} ${escapeHtml(title)}</summary>
+          <div class="article-analysis-body"><p><strong>Event:</strong> ${escapeHtml(item.event || 'No material event identified')}</p>${body}</div>
+        </details>`;
+      }).join('') : '<p class="muted">No article-by-article analysis returned.</p>';
+
+      painAnalysis.innerHTML = `
+        <div class="analysis-note">${escapeHtml(analysis.evidence_strength_note || 'Evidence strength was not summarized.')}${analysis.model ? ` · Analyzed with ${escapeHtml(analysis.model)}` : ''}</div>
+        <section class="analysis-section"><h3>Top Current Operational Problems</h3><div class="problem-list">${problemMarkup}</div></section>
+        <section class="analysis-section"><h3>Evidence Ledger</h3>${ledgerMarkup}</section>
+        <section class="analysis-section"><h3>Article-by-Article Analysis</h3><div class="article-analysis-list">${articleMarkup}</div></section>`;
+      articleResults.hidden = false;
+    }
+    async function searchMarketPainPoints() {
+      const request = buildPainPointRequest();
+      if (!request) return;
+      if (window.location.protocol === 'file:') {
+        newsStatus.textContent = 'Open this dashboard through the local server to search NewsAPI.';
+        newsStatus.classList.add('is-error');
+        newsStatus.hidden = false;
+        return;
+      }
+      isSearching = true;
+      updatePainPointButton();
+      setTrace('query', 'running', 'Creating a query from only the selected visible persona text.');
+      setTrace('news', 'idle', 'Waiting for query generation.');
+      setTrace('pains', 'idle', 'Waiting for deduplicated articles.');
+      newsStatus.textContent = 'Generating the NewsAPI query, searching recent news, and analyzing operational pain hypotheses…';
+      newsStatus.classList.remove('is-error');
+      newsStatus.hidden = false;
+      articleResults.hidden = true;
+      try {
+        const response = await fetch('/api/news', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(request)
+        });
+        const payload = await response.json();
+        if (!response.ok || payload.status === 'error') {
+          if (payload.query) {
+            painPointJson.textContent = JSON.stringify({ ...payload.query, persona_descriptions: request.persona_descriptions }, null, 2);
+            painPointResult.hidden = false;
+          }
+          if (payload.stage === 'pain-point-analysis') {
+            const queryTrace = Array.isArray(payload.modelTrace) ? payload.modelTrace.find(item => item.id === 'news-query-generation') : null;
+            setTrace('query', 'completed', `${queryTrace && queryTrace.model ? queryTrace.model : 'OpenAI'} · visible persona text only.`);
+            setTrace('news', 'completed', 'News retrieval and event-level semantic deduplication completed.');
+            setTrace('pains', 'error', payload.message || 'Pain-point analysis failed.');
+          }
+          throw new Error(payload.message || `NewsAPI request failed (${response.status})`);
+        }
+        const queryDisplay = { ...payload.query, persona_descriptions: request.persona_descriptions };
+        painPointJson.textContent = JSON.stringify(queryDisplay, null, 2);
+        painPointResult.hidden = false;
+        const traces = Array.isArray(payload.modelTrace) ? payload.modelTrace : [];
+        const queryTrace = traces.find(item => item.id === 'news-query-generation');
+        const painTrace = traces.find(item => item.id === 'pain-point-analysis');
+        setTrace('query', 'completed', `${queryTrace && queryTrace.model ? queryTrace.model : 'OpenAI'} · visible persona text only.`);
+        const dedupe = payload.deduplication || {};
+        setTrace('news', 'completed', `${Number(payload.returnedResults || 0)} distinct events retained; ${Number(payload.duplicatesRemoved || 0)} duplicates removed · ${dedupe.backend || 'semantic model'}${dedupe.fallback_used ? ' fallback' : ''}.`);
+        setTrace('pains', 'completed', `${painTrace && painTrace.model ? painTrace.model : 'OpenAI'} · structured evidence synthesis.`);
+        const returned = Number(payload.returnedResults || 0);
+        const problemCount = payload.analysis && Array.isArray(payload.analysis.top_problems) ? payload.analysis.top_problems.length : 0;
+        newsStatus.textContent = `Analysis complete: ${problemCount} operational pain hypothes${problemCount === 1 ? 'is' : 'es'} from ${returned} distinct news event${returned === 1 ? '' : 's'}.`;
+        renderPainAnalysis(payload);
+      } catch (error) {
+        newsStatus.textContent = error.message || 'The NewsAPI request failed.';
+        newsStatus.classList.add('is-error');
+        if (traceState.pains.status === 'error') { /* Stage-specific error already shown. */ }
+        else if (traceState.query.status === 'running') setTrace('query', 'error', error.message || 'Query generation failed.');
+        else if (traceState.news.status !== 'completed') setTrace('news', 'error', error.message || 'News retrieval failed.');
+        else setTrace('pains', 'error', error.message || 'Pain-point analysis failed.');
+      } finally {
+        isSearching = false;
+        updatePainPointButton();
+      }
+    }
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'})[char]);
+    }
+    function safeArticleUrl(value) {
+      try {
+        const url = new URL(String(value));
+        return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : '#';
+      } catch {
+        return '#';
+      }
+    }
+    function selectedFieldsFromControls() {
+      return [...fieldToggleList.querySelectorAll('input:checked')].map(input => input.value);
+    }
+    function syncFieldControls() {
+      fieldToggleList.querySelectorAll('input').forEach(input => {
+        input.checked = activeFields.includes(input.value);
+      });
+    }
+    function embeddingLabel(backend, metadata) {
+      if (backend === 'openai') return `OpenAI ${metadata && metadata.model ? metadata.model : 'embeddings'}`;
+      if (backend === 'tfidf-lsa') return 'offline TF-IDF + LSA';
+      return backend || 'embeddings';
+    }
+    function applyClusteringState(fields, state) {
+      activeFields = [...fields];
+      activeModels = state.models;
+      activeRecords = state.records;
+      activeEmbeddingMetadata = state.embeddingMetadata || {};
+      const minimumK = Number(state.minimumK || Math.min(...Object.keys(activeModels).map(Number)));
+      const maximumK = Number(state.maximumK || Math.max(...Object.keys(activeModels).map(Number)));
+      clusterCountInput.min = String(minimumK);
+      clusterCountInput.max = String(maximumK);
+      if (!activeModels[String(clusterCountInput.value)]) {
+        clusterCountInput.value = String(state.defaultK || Math.min(6, maximumK));
+      }
+      document.getElementById('semanticMeta').textContent = `Clustering fields: ${activeFields.join(' + ')}`;
+      const embeddingName = embeddingLabel(state.embeddingBackend, activeEmbeddingMetadata);
+      fieldStatus.textContent = `Using ${activeFields.length} CSV column${activeFields.length === 1 ? '' : 's'} · ${embeddingName}`;
+      fieldStatus.classList.remove('is-error');
+      const embeddingTrace = Array.isArray(state.modelTrace) ? state.modelTrace.find(item => item.id === 'embedding-generation') : null;
+      const personaTrace = Array.isArray(state.modelTrace) ? state.modelTrace.find(item => item.id === 'persona-description-generation') : null;
+      setTrace(
+        'cluster',
+        embeddingTrace ? embeddingTrace.status : 'completed',
+        embeddingTrace && embeddingTrace.detail
+          ? embeddingTrace.detail
+          : `${activeRecords.length} rows · ${embeddingName}.`
+      );
+      setTrace(
+        'personas',
+        personaTrace ? personaTrace.status : 'completed',
+        personaTrace && (personaTrace.detail || personaTrace.model)
+          ? (personaTrace.detail || `${personaTrace.model} · every selected field accounted for.`)
+          : activeDatasetId === 'demo'
+            ? 'Pre-generated demo descriptions; no call on page load.'
+            : 'Descriptions ready.'
+      );
+      document.getElementById('rowMeta').textContent = `${activeRecords.length} prospects`;
+      document.getElementById('datasetMeta').textContent = activeDatasetId === 'demo' ? 'Demo CSV' : activeDatasetName;
+      document.getElementById('embeddingMeta').textContent = embeddingName;
+      document.getElementById('displayHeader0').textContent = activeDisplayFields[0] || 'Record';
+      document.getElementById('displayHeader1').textContent = activeDisplayFields[1] || 'Detail 1';
+      document.getElementById('displayHeader2').textContent = activeDisplayFields[2] || 'Detail 2';
+      invalidatePainPointRequest();
+      update();
+    }
+    async function recluster(fields) {
+      const key = clusteringCacheKey(fields);
+      const cached = clusteringCache.get(key);
+      if (cached) {
+        if (clusteringRequestController) clusteringRequestController.abort();
+        isClustering = false;
+        applyClusteringState(fields, cached);
+        return;
+      }
+      if (window.location.protocol === 'file:') {
+        fieldStatus.textContent = 'Open this dashboard through the local server to change clustering columns.';
+        fieldStatus.classList.add('is-error');
+        syncFieldControls();
+        return;
+      }
+      if (clusteringRequestController) clusteringRequestController.abort();
+      const controller = new AbortController();
+      clusteringRequestController = controller;
+      isClustering = true;
+      fieldStatus.textContent = `Reclustering with ${fields.join(' + ')}…`;
+      fieldStatus.classList.remove('is-error');
+      setTrace('cluster', 'running', `Loading cached vectors and embedding new values for ${fields.length} selected column${fields.length === 1 ? '' : 's'}.`);
+      setTrace('personas', 'running', 'Runs immediately after fuzzy memberships are ready.');
+      updatePainPointButton();
+      try {
+        const response = await fetch('/api/clusters', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataset_id: activeDatasetId, fields }),
+          signal: controller.signal
+        });
+        const payload = await response.json();
+        if (!response.ok || payload.status === 'error') {
+          throw new Error(payload.message || `Clustering request failed (${response.status})`);
+        }
+        const state = {
+          models: payload.models,
+          records: payload.records,
+          embeddingBackend: payload.embeddingBackend,
+          embeddingMetadata: payload.embeddingMetadata || {},
+          minimumK: payload.minimumK,
+          maximumK: payload.maximumK,
+          defaultK: payload.defaultK,
+          modelTrace: payload.modelTrace
+        };
+        clusteringCache.set(key, state);
+        applyClusteringState(payload.selectedFields, state);
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        fieldStatus.textContent = error.message || 'Could not recompute the clustering.';
+        fieldStatus.classList.add('is-error');
+        setTrace('cluster', 'error', error.message || 'Could not recompute the clustering.');
+        setTrace('personas', 'idle', 'Waiting for a successful clustering run.');
+        syncFieldControls();
+      } finally {
+        if (clusteringRequestController === controller) {
+          clusteringRequestController = null;
+          isClustering = false;
+          updatePainPointButton();
+        }
+      }
+    }
+    function scheduleRecluster(fields) {
+      window.clearTimeout(reclusterTimer);
+      reclusterTimer = window.setTimeout(() => recluster(fields), 180);
+    }
+    function renderFieldToggles() {
+      fieldToggleList.innerHTML = activeClusterableFields.map(field => `
+        <label class="field-toggle">
+          <input type="checkbox" value="${escapeHtml(field)}" ${activeFields.includes(field) ? 'checked' : ''}>
+          <span>${escapeHtml(field)}</span>
+        </label>`).join('');
+      fieldToggleList.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', () => {
+          const fields = selectedFieldsFromControls();
+          if (!fields.length) {
+            input.checked = true;
+            fieldStatus.textContent = 'Keep at least one CSV column selected.';
+            fieldStatus.classList.add('is-error');
+            return;
+          }
+          scheduleRecluster(fields);
+        });
+      });
+      fieldStatus.textContent = `Ready to cluster with ${activeFields.length} selected CSV column${activeFields.length === 1 ? '' : 's'}.`;
+    }
+
+    async function uploadCustomerCsv(file) {
+      if (!file) return;
+      if (window.location.protocol === 'file:') {
+        datasetStatus.textContent = 'Open this dashboard through the local server to upload a CSV.';
+        datasetStatus.classList.add('is-error');
+        return;
+      }
+      datasetStatus.textContent = `Reading ${file.name}…`;
+      datasetStatus.classList.remove('is-error');
+      setTrace('parse', 'running', `Reading ${file.name} in the local dashboard server.`);
+      try {
+        const csvText = await file.text();
+        const response = await fetch('/api/datasets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, csvText })
+        });
+        const profile = await response.json();
+        if (!response.ok || profile.status === 'error') throw new Error(profile.message || 'Could not load the CSV.');
+        activeDatasetId = profile.datasetId;
+        activeDatasetName = profile.datasetName;
+        activeClusterableFields = [...profile.clusterableFields];
+        activeDisplayFields = [...profile.displayFields];
+        activeFields = [...profile.defaultSelectedFields];
+        activeRecords = profile.records.map(record => ({ ...record }));
+        Object.keys(selectedPersonas).forEach(key => delete selectedPersonas[key]);
+        renderFieldToggles();
+        document.getElementById('rowMeta').textContent = `${profile.rowCount} prospects`;
+        document.getElementById('datasetMeta').textContent = profile.datasetName;
+        datasetStatus.textContent = `${profile.datasetName} parsed locally · ${profile.rowCount} rows · ${profile.clusterableFields.length} descriptive columns found. Selected clustering values are sent to OpenAI for embedding.`;
+        setTrace('parse', 'completed', `${profile.rowCount} rows; ${profile.clusterableFields.length} descriptive columns inferred locally.`);
+        setTrace('query', 'idle', 'Runs after persona selection.');
+        setTrace('news', 'idle', 'Runs after query generation.');
+        setTrace('pains', 'idle', 'Runs after article deduplication.');
+        await recluster(activeFields);
+      } catch (error) {
+        datasetStatus.textContent = error.message || 'Could not load the CSV.';
+        datasetStatus.classList.add('is-error');
+        setTrace('parse', 'error', error.message || 'Could not parse the CSV.');
+      } finally {
+        csvUpload.value = '';
+      }
+    }
+
+    function useDemoDataset() {
+      if (clusteringRequestController) clusteringRequestController.abort();
+      activeDatasetId = DATA.datasetId;
+      activeDatasetName = DATA.datasetName;
+      activeClusterableFields = [...DATA.clusterableFields];
+      activeDisplayFields = [...DATA.displayFields];
+      activeFields = [...DATA.defaultSelectedFields];
+      activeRecords = DATA.records.map(record => ({ ...record }));
+      activeModels = DATA.models;
+      clusterCountInput.min = String(DATA.minimumK);
+      clusterCountInput.max = String(DATA.maximumK);
+      clusterCountInput.value = String(DATA.defaultK);
+      Object.keys(selectedPersonas).forEach(key => delete selectedPersonas[key]);
+      renderFieldToggles();
+      datasetStatus.textContent = 'Showing the bundled demo CSV. Uploads stay in this local server session.';
+      datasetStatus.classList.remove('is-error');
+      setTrace('parse', 'completed', 'Bundled demo loaded locally.');
+      setTrace('cluster', 'completed', 'Precomputed demo embeddings and fuzzy memberships.');
+      setTrace('personas', 'completed', 'Pre-generated demo descriptions; no call on page load.');
+      setTrace('query', 'idle', 'Runs after persona selection.');
+      setTrace('news', 'idle', 'Runs after query generation.');
+      setTrace('pains', 'idle', 'Runs after article deduplication.');
+      applyClusteringState(activeFields, clusteringCache.get(clusteringCacheKey(activeFields)));
+    }
+    function update() {
+      const threshold = Number(thresholdInput.value);
+      const k = Number(clusterCountInput.value);
+      thresholdValue.textContent = threshold.toFixed(2);
+      clusterCountValue.textContent = k;
+      document.getElementById('kMeta').textContent = `${k} fuzzy prototypes`;
+      document.getElementById('semanticMeta').textContent = `Clustering fields: ${activeFields.join(' + ')}`;
+      renderStats(threshold);
+      renderClusters(threshold);
+      renderTable(threshold);
+      renderScatter(threshold);
+      updatePainPointButton();
+    }
+    thresholdInput.addEventListener('input', () => { invalidatePainPointRequest(); update(); });
+    clusterCountInput.addEventListener('input', () => { invalidatePainPointRequest(); update(); });
+    painPointButton.addEventListener('click', searchMarketPainPoints);
+    csvUpload.addEventListener('change', () => uploadCustomerCsv(csvUpload.files && csvUpload.files[0]));
+    demoButton.addEventListener('click', useDemoDataset);
+    new ResizeObserver(() => renderScatter(Number(thresholdInput.value))).observe(document.getElementById('scatter'));
+    document.getElementById('embeddingMeta').textContent = embeddingLabel(DATA.embeddingBackend, DATA.embeddingMetadata || {});
+    traceState.cluster.detail = `${embeddingLabel(DATA.embeddingBackend, DATA.embeddingMetadata || {})} · precomputed demo vectors.`;
+    renderFieldToggles();
+    renderTrace();
+    update();
+  </script>
+</body>
+</html>

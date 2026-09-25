@@ -1,0 +1,499 @@
+{
+  "labels": [
+    "Board & Advisory Roles",
+    "C-Suite & Functional Executives",
+    "Investors"
+  ],
+  "top_terms": [
+    [
+      "advisor",
+      "job",
+      "title",
+      "scientific",
+      "truth",
+      "advisory",
+      "board",
+      "ceo"
+    ],
+    [
+      "founder",
+      "job",
+      "title",
+      "chairman",
+      "ceo",
+      "chair",
+      "evangelist",
+      "board"
+    ],
+    [
+      "investor",
+      "angel",
+      "job",
+      "title",
+      "advisory",
+      "advisor",
+      "seed",
+      "board"
+    ]
+  ],
+  "diagnostics": [
+    {
+      "k": 3.0,
+      "selection_score": 0.825,
+      "partition_coefficient": 0.48283881251252553,
+      "partition_entropy": 0.8829371855895206,
+      "xie_beni": 3.452442689760262,
+      "silhouette_argmax": 0.165567626194483,
+      "minimum_centroid_distance": 0.2657969041931637,
+      "objective": 12.195407569680926
+    },
+    {
+      "k": 4.0,
+      "selection_score": 0.475,
+      "partition_coefficient": 0.37779029053307445,
+      "partition_entropy": 1.1492424409597846,
+      "xie_beni": 4.961385211829057,
+      "silhouette_argmax": 0.11272126054296956,
+      "minimum_centroid_distance": 0.2070688159545975,
+      "objective": 10.636588366759982
+    },
+    {
+      "k": 5.0,
+      "selection_score": 0.5875,
+      "partition_coefficient": 0.3737655766221028,
+      "partition_entropy": 1.2614649158366447,
+      "xie_beni": 2.175976318167935,
+      "silhouette_argmax": 0.1434134064747764,
+      "minimum_centroid_distance": 0.2967564753583227,
+      "objective": 9.58130306025662
+    },
+    {
+      "k": 6.0,
+      "selection_score": 0.2,
+      "partition_coefficient": 0.2978551034727748,
+      "partition_entropy": 1.4865222864631087,
+      "xie_beni": 6.314805524537994,
+      "silhouette_argmax": 0.09934771578423289,
+      "minimum_centroid_distance": 0.16675975855267236,
+      "objective": 8.780363584028866
+    },
+    {
+      "k": 7.0,
+      "selection_score": 0.4125,
+      "partition_coefficient": 0.36022473412651757,
+      "partition_entropy": 1.4340289494754956,
+      "xie_beni": 1.6997891108866168,
+      "silhouette_argmax": 0.12303586280309474,
+      "minimum_centroid_distance": 0.30989219127458445,
+      "objective": 8.161806850595829
+    }
+  ],
+  "normalized_texts": [
+    "job title ceo",
+    "job title investor strategic advisor",
+    "job title cofounder founder founder",
+    "job title investor",
+    "job title ambassador",
+    "job title cofounder founder founder board member",
+    "job title board member",
+    "job title scientific advisor",
+    "job title advisor founding member",
+    "job title cofounder founder founder and chairman",
+    "job title cofounder founder and chief evangelist",
+    "job title chief human resources officer",
+    "job title managing partner",
+    "job title advisor to the ceo",
+    "job title cofounder founder founder securesave",
+    "job title founder",
+    "job title founding partner",
+    "job title beehiiv author of brilliance brief",
+    "job title venture scout",
+    "job title investor and advisory board member",
+    "job title partner",
+    "job title special advisor",
+    "job title angel investor",
+    "job title vice president",
+    "job title strategic advisor",
+    "job title chief information officer",
+    "job title cofounder founder founder",
+    "job title truth advisor",
+    "job title founder",
+    "job title chair and cofounder founder founder",
+    "job title founder",
+    "job title seed investor",
+    "job title human resources consultant",
+    "job title cofounder founder founder",
+    "job title cofounder founder founder",
+    "job title ceo and founder",
+    "job title ceo and cofounder founder founder",
+    "job title mentor advisor de carreiras networking e linkedin",
+    "job title cofounder founder founder",
+    "job title founder",
+    "job title cofounder founder and executive chairman",
+    "job title cofounder founder founder and chief medical officer",
+    "job title founder and ceo",
+    "job title advisory board member",
+    "job title talent acquisition",
+    "job title investor",
+    "job title executive chairwoman",
+    "job title influencer",
+    "job title mentor advisor",
+    "job title angel investor"
+  ],
+  "embedding_backend": "openai",
+  "embedding_metadata": {
+    "model": "text-embedding-3-small",
+    "dimensions": 1536,
+    "combination": "Equal-weight mean of nonblank selected-field embeddings, then L2 normalization",
+    "cache_hits": 42,
+    "api_inputs": 0,
+    "api_requests": 0,
+    "fields": {
+      "Job Title": {
+        "model": "text-embedding-3-small",
+        "dimensions": 1536,
+        "cache_hits": 42,
+        "api_inputs": 0,
+        "api_requests": 0,
+        "blank_inputs": 0
+      }
+    }
+  },
+  "selected_k": 3,
+  "source_row_count": 50,
+  "models": {
+    "3": {
+      "labels": [
+        "Board & Advisory Roles",
+        "C-Suite & Functional Executives",
+        "Investors"
+      ],
+      "top_terms": [
+        [
+          "advisor",
+          "job",
+          "title",
+          "scientific",
+          "truth",
+          "advisory",
+          "board",
+          "ceo"
+        ],
+        [
+          "founder",
+          "job",
+          "title",
+          "chairman",
+          "ceo",
+          "chair",
+          "evangelist",
+          "board"
+        ],
+        [
+          "investor",
+          "angel",
+          "job",
+          "title",
+          "advisory",
+          "advisor",
+          "seed",
+          "board"
+        ]
+      ],
+      "diagnostics": {
+        "partition_coefficient": 0.48283881251252553,
+        "partition_entropy": 0.8829371855895206,
+        "xie_beni": 3.452442689760262,
+        "silhouette_argmax": 0.165567626194483,
+        "minimum_centroid_distance": 0.2657969041931637,
+        "objective": 12.195407569680926
+      }
+    },
+    "4": {
+      "labels": [
+        "Advisors & Board Members",
+        "Founders & Executive Leaders — Founder focus",
+        "Investors & Venture Partners",
+        "Founders & Executive Leaders — Job focus"
+      ],
+      "top_terms": [
+        [
+          "advisor",
+          "scientific",
+          "job",
+          "title",
+          "truth",
+          "advisory",
+          "ceo",
+          "board"
+        ],
+        [
+          "founder",
+          "chair",
+          "job",
+          "title",
+          "ceo",
+          "chairman",
+          "evangelist",
+          "board"
+        ],
+        [
+          "investor",
+          "angel",
+          "job",
+          "title",
+          "seed",
+          "advisory",
+          "advisor",
+          "board"
+        ],
+        [
+          "founder",
+          "job",
+          "title",
+          "ceo",
+          "chairman",
+          "board",
+          "chair",
+          "evangelist"
+        ]
+      ],
+      "diagnostics": {
+        "partition_coefficient": 0.37779029053307445,
+        "partition_entropy": 1.1492424409597846,
+        "xie_beni": 4.961385211829057,
+        "silhouette_argmax": 0.11272126054296956,
+        "minimum_centroid_distance": 0.2070688159545975,
+        "objective": 10.636588366759982
+      }
+    },
+    "5": {
+      "labels": [
+        "Investors & Venture Partners — Investor focus",
+        "Investors & Venture Partners — Partner focus",
+        "Founders & Executive Leaders — Founder focus",
+        "Founders & Executive Leaders — Job focus",
+        "Advisors & Board Members"
+      ],
+      "top_terms": [
+        [
+          "investor",
+          "angel",
+          "job",
+          "title",
+          "seed",
+          "founder",
+          "scout",
+          "venture"
+        ],
+        [
+          "partner",
+          "managing",
+          "job",
+          "title",
+          "founder",
+          "ceo",
+          "president",
+          "vice"
+        ],
+        [
+          "founder",
+          "job",
+          "title",
+          "ceo",
+          "chair",
+          "chairman",
+          "board"
+        ],
+        [
+          "founder",
+          "job",
+          "title",
+          "chairman",
+          "ceo",
+          "board",
+          "chair",
+          "partner"
+        ],
+        [
+          "advisor",
+          "scientific",
+          "job",
+          "title",
+          "truth",
+          "advisory",
+          "board",
+          "ceo"
+        ]
+      ],
+      "diagnostics": {
+        "partition_coefficient": 0.3737655766221028,
+        "partition_entropy": 1.2614649158366447,
+        "xie_beni": 2.175976318167935,
+        "silhouette_argmax": 0.1434134064747764,
+        "minimum_centroid_distance": 0.2967564753583227,
+        "objective": 9.58130306025662
+      }
+    },
+    "6": {
+      "labels": [
+        "Founders & Executive Leaders — Ceo focus",
+        "Founders & Executive Leaders — Founder focus",
+        "Founders & Executive Leaders — Chairman focus",
+        "Investors & Venture Partners",
+        "Founders & Executive Leaders — Chair focus",
+        "Advisors & Board Members"
+      ],
+      "top_terms": [
+        [
+          "ceo",
+          "job",
+          "title",
+          "advisor",
+          "advisory",
+          "founder",
+          "board",
+          "investor"
+        ],
+        [
+          "founder",
+          "job",
+          "title",
+          "ceo",
+          "chair",
+          "board",
+          "chairman"
+        ],
+        [
+          "chairman",
+          "founder",
+          "job",
+          "title",
+          "ceo",
+          "chair"
+        ],
+        [
+          "investor",
+          "board",
+          "angel",
+          "job",
+          "title",
+          "advisory",
+          "seed",
+          "advisor"
+        ],
+        [
+          "chair",
+          "founder",
+          "job",
+          "title",
+          "ceo",
+          "chairman",
+          "board"
+        ],
+        [
+          "scientific",
+          "advisor",
+          "job",
+          "title",
+          "truth",
+          "mentor",
+          "advisory",
+          "president"
+        ]
+      ],
+      "diagnostics": {
+        "partition_coefficient": 0.2978551034727748,
+        "partition_entropy": 1.4865222864631087,
+        "xie_beni": 6.314805524537994,
+        "silhouette_argmax": 0.09934771578423289,
+        "minimum_centroid_distance": 0.16675975855267236,
+        "objective": 8.780363584028866
+      }
+    },
+    "7": {
+      "labels": [
+        "Founders & Executive Leaders — Founder focus",
+        "Founders & Executive Leaders — Ceo focus",
+        "Advisors & Board Members",
+        "People & Talent Leaders",
+        "Investors & Venture Partners — Investor focus",
+        "Investors & Venture Partners — Partner focus",
+        "Founders & Executive Leaders — President focus"
+      ],
+      "top_terms": [
+        [
+          "founder",
+          "job",
+          "title",
+          "chair",
+          "chairman",
+          "board",
+          "ceo"
+        ],
+        [
+          "ceo",
+          "founder",
+          "job",
+          "title"
+        ],
+        [
+          "mentor",
+          "advisor",
+          "linkedin",
+          "carreiras",
+          "networking",
+          "job",
+          "title",
+          "ambassador"
+        ],
+        [
+          "acquisition",
+          "talent",
+          "resources",
+          "human",
+          "job",
+          "title",
+          "consultant",
+          "officer"
+        ],
+        [
+          "investor",
+          "angel",
+          "job",
+          "title",
+          "seed",
+          "advisory",
+          "advisor",
+          "scout"
+        ],
+        [
+          "partner",
+          "managing",
+          "job",
+          "title",
+          "founder",
+          "ceo"
+        ],
+        [
+          "president",
+          "vice",
+          "chairwoman",
+          "board",
+          "job",
+          "title",
+          "advisory",
+          "ceo"
+        ]
+      ],
+      "diagnostics": {
+        "partition_coefficient": 0.36022473412651757,
+        "partition_entropy": 1.4340289494754956,
+        "xie_beni": 1.6997891108866168,
+        "silhouette_argmax": 0.12303586280309474,
+        "minimum_centroid_distance": 0.30989219127458445,
+        "objective": 8.161806850595829
+      }
+    }
+  }
+}
