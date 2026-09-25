@@ -44,6 +44,16 @@ python -m src.serve_dashboard
 
 Open `http://127.0.0.1:8765/clustering_explorer.html`. The browser sends the generated query and the visible text of the selected persona rows to the local proxy. The proxy authenticates with the `X-Api-Key` header and searches English-language coverage from the last 30 days, newest-first. It fetches additional result pages when needed and retains up to 25 distinct events by comparing cached title-and-description embeddings plus local entity, event-type, amount, date, token, and title signals. Conflicting event evidence blocks merges, and every accepted merge retains auditable pair-level provenance.
 
+### Heroku-buildpack deployment
+
+The repository root is ready for a Python Heroku buildpack. `requirements.txt` triggers Python detection, `.python-version` selects Python 3.13, and `Procfile` starts the web process on the platform-provided `PORT`:
+
+```text
+web: python -m src.serve_dashboard --host 0.0.0.0 --port $PORT
+```
+
+On Northflank, select its Heroku/buildpack build type with this directory as the build context. Expose the same injected application port and use `/health` for the HTTP health check. Configure `OPENAI_API_KEY` and `NEWSAPI_KEY` as secrets; `OPENAI_MODEL` and `OPENAI_EMBEDDING_MODEL` remain optional.
+
 The proxy then sends only those visible persona descriptions and the retained articles' titles, descriptions, source names, dates, and URLs to the OpenAI Responses API. Structured output is used to produce ranked operational pain hypotheses, an evidence ledger, and a compact article-by-article audit. The dashboard presents that synthesis instead of a raw article feed. Both API keys stay in the server-side `.env` file and are never embedded in the HTML; OpenAI response storage is disabled for these requests.
 
 The NewsAPI query builder receives persona-specific context only from the selected candidates' visible names and per-column evidence. It does not inject fixed market assumptions such as B2B, AI, SaaS, startup, or martech. Its generic event vocabulary is inferred from role and theme words that actually appear in that visible text, and the generated JSON includes the exact `persona_descriptions` used for auditability.
