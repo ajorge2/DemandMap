@@ -1,0 +1,88 @@
+{
+  "automated": {
+    "distinct_persona_selections": 0,
+    "duration_seconds": {
+      "maximum": null,
+      "median": null,
+      "p95": null,
+      "sample_count": 0
+    },
+    "failures": 4,
+    "quality_validated_duration_seconds": {
+      "maximum": null,
+      "median": null,
+      "p95": null,
+      "sample_count": 0
+    },
+    "quality_validated_successes": 0,
+    "stage_duration_seconds": {
+      "news_retrieval_and_deduplication": {
+        "maximum": null,
+        "median": null,
+        "p95": null,
+        "sample_count": 0
+      },
+      "pain_synthesis": {
+        "maximum": null,
+        "median": null,
+        "p95": null,
+        "sample_count": 0
+      },
+      "query_generation": {
+        "maximum": null,
+        "median": null,
+        "p95": null,
+        "sample_count": 0
+      }
+    },
+    "successes": 0,
+    "timeouts": 0,
+    "total_runs": 4
+  },
+  "claim_gate": {
+    "claim": "compressed GTM research from hours to under 10 minutes",
+    "eligible": false,
+    "requirements": {
+      "at_least_five_quality_automated_runs": false,
+      "at_least_three_persona_selections": false,
+      "at_least_three_quality_manual_observations": false,
+      "automated_median_below_10_minutes": false,
+      "manual_active_median_at_least_2_hours": false,
+      "manual_personas_have_automated_matches": false
+    },
+    "unmet_requirements": [
+      "at_least_five_quality_automated_runs",
+      "at_least_three_persona_selections",
+      "at_least_three_quality_manual_observations",
+      "manual_personas_have_automated_matches",
+      "automated_median_below_10_minutes",
+      "manual_active_median_at_least_2_hours"
+    ]
+  },
+  "generated_at_utc": "2026-10-03T00:14:36.845542Z",
+  "manual": {
+    "active_seconds": {
+      "maximum": null,
+      "median": null,
+      "p95": null,
+      "sample_count": 0
+    },
+    "elapsed_seconds": {
+      "maximum": null,
+      "median": null,
+      "p95": null,
+      "sample_count": 0
+    },
+    "quality_validated_observations": 0,
+    "total_observations": 0
+  },
+  "schema_version": "1.0",
+  "task_definition": {
+    "deduplication_required": true,
+    "deliverable": "ranked operational-pain hypotheses with source citations",
+    "lookback_days": 30,
+    "maximum_distinct_events": 25,
+    "timing_end": "cited deliverable is ready for review",
+    "timing_start": "persona descriptions are ready"
+  }
+}

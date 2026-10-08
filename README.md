@@ -1,4 +1,8 @@
-# Fuzzy semantic clustering prototype
+# DemandMap — Evidence-grounded market research
+
+**[Live product](https://site--demandmap--74wvcb9qzxr6.code.run/clustering_explorer.html)** · **[Evidence & limitations](https://ajorge2.github.io/DemandMap/)**
+
+The evidence page connects the interactive demo to its inspectable source-row grounding, deterministic validation, benchmark protocol, raw run status, and explicit claim gate.
 
 This project clusters the supplied B2B prospect export using one semantic view at a time. The first experiment uses `Job Title` because it is populated for all 50 rows and directly captures prospect role. `Headline` and `Summary` are richer but only populated for six rows.
 
